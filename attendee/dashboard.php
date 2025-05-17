@@ -13,10 +13,6 @@ session_start();
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 
     <style>
-        body {
-            background: #f5f6fa;
-        }
-
         .card-summary {
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
