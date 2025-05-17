@@ -17,11 +17,9 @@ if ($email == false) {
 <style>
     html,
     body {
-        background-image: url('/campus_ems/assets/images/events-bg.jpg');
+        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+            url('/campus_ems/assets/images/events-bg.jpg') no-repeat center center;
         background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        background-repeat: no-repeat;
         min-height: 100vh;
         font-family: 'Poppins', sans-serif;
     }

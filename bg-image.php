@@ -5,6 +5,7 @@
         background-size: cover;
         background-attachment: fixed;
         min-height: 100vh;
+        color: #fff;
     }
 </style>
 </head>

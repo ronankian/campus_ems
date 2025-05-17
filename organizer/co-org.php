@@ -62,8 +62,8 @@
     </optgroup>
     <optgroup label="Performing Arts Groups">
         <option value="ARTRADS">ARTRADS Dance Crew</option>
-        <option value="CHORALE">CvSU-CCAT Chorale</option>
-        <option value="SONIC-PISTONS">CvSU-CCAT Sonic Pistons Live Band
+        <option value="CHORALE">Chorale</option>
+        <option value="SONIC-PISTONS">Live Band
         </option>
     </optgroup>
     <optgroup label="Student Body Organization">
