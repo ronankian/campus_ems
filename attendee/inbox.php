@@ -69,7 +69,7 @@ session_start();
                                 <div class="table-responsive" style="min-height: 450px;">
                                     <table class="table table-hover table-bordered">
                                         <thead>
-                                            <tr>
+                                            <tr class="text-center align-middle">
                                                 <th>Title</th>
                                                 <th>Subject</th>
                                                 <th>Date & Time</th>

@@ -13,8 +13,9 @@ session_start();
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 
     <style>
-        body {
-            background: #f5f6fa;
+        .dashboard-container {
+            border-radius: 6px;
+            backdrop-filter: blur(8px);
         }
 
         .card-summary {
@@ -31,27 +32,23 @@ session_start();
 </head>
 
 <body>
+    <?php include '../navbar.php'; ?>
+    <?php include '../bg-image.php'; ?>
 
-    <?php include '../navbar-user.php'; ?>
 
-    <div class="py-5"></div>
+    <div class="container">
 
-    <div class="container mt-3">
-
-        <div class="row">
+        <div class="row dashboard-container p-3 py-4">
 
             <?php include 'sidebar.php'; ?>
 
             <!-- Main Content -->
-            <div class="col-md-8 col-lg-9">
+            <div class="col-md-9 ps-4">
                 <div class="row g-3 mb-4">
 
                     <!-- Welcome -->
                     <div class="col-12">
-                        <div class="card shadow rounded-4 border-0 p-4 mb-3">
-                            <h2 class="fw-bold mb-1">Welcome, Organizer!</h2>
-                            <div class="text-muted mb-2">Here's what's happening with your event participation</div>
-                        </div>
+                        <h4 class="fw-bold mb-3">Attedee Overview</h4>
                     </div>
 
                     <!-- Counts -->
@@ -59,21 +56,21 @@ session_start();
                         <div class="card card-summary shadow border-0 text-center p-3">
                             <div class="icon text-primary"><i class="fa fa-calendar-check"></i></div>
                             <div class="fw-bold fs-5">1</div>
-                            <div class="text-muted">Events Created</div>
+                            <div class="text-muted">Events Attended</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card card-summary shadow border-0 text-center p-3">
                             <div class="icon text-primary"><i class="fa fa-clipboard-check"></i></div>
                             <div class="fw-bold fs-5">3</div>
-                            <div class="text-muted">Events Organized</div>
+                            <div class="text-muted">Events Registered</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card card-summary shadow border-0 text-center p-3">
                             <div class="icon text-primary"><i class="fa fa-clock-rotate-left"></i></div>
                             <div class="fw-bold fs-5">5</div>
-                            <div class="text-muted">Pending Approvals</div>
+                            <div class="text-muted">Pending Registration</div>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -210,7 +207,7 @@ session_start();
                 </div>
 
                 <!-- Recently Attended -->
-                <div class="row g-3 mb-4">
+                <div class="row g-3">
                     <div class="col-md-12">
                         <div class="card shadow border-0 p-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -223,6 +220,7 @@ session_start();
             </div>
         </div>
     </div>
+    <?php include '../footer.php'; ?>
 </body>
 
 </html>

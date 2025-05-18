@@ -248,7 +248,17 @@ $result = mysqli_query($con, $query);
             <!-- Sidebar -->
             <div class="col-md-4 mb-4 ps-5">
                 <div class="position-sticky" style="top: 40px;">
-                    <a href="organizer/create-form.php" class="btn btn-success btn-lg"
+                    <?php
+                    $create_link = 'login/login-user.php';
+                    if (isset($_SESSION['role'])) {
+                        if ($_SESSION['role'] === 'attendee') {
+                            $create_link = 'attendee/account.php';
+                        } elseif ($_SESSION['role'] === 'organizer') {
+                            $create_link = 'organizer/create-form.php';
+                        }
+                    }
+                    ?>
+                    <a href="<?php echo $create_link; ?>" class="btn btn-success btn-lg"
                         style="font-weight: bold; letter-spacing: 1px; width: 100%;">
                         <i class="fa fa-plus me-2"></i> Create Event
                     </a>

@@ -2,13 +2,13 @@
 session_start();
 require "connection.php";
 $email = "";
-$name = "";
 $username = "";
 $errors = array();
 
 //if user signup button
 if (isset($_POST['signup'])) {
-    $name = mysqli_real_escape_string($con, $_POST['name']);
+    $firstname = mysqli_real_escape_string($con, $_POST['firstname']);
+    $lastname = mysqli_real_escape_string($con, $_POST['lastname']);
     $username = mysqli_real_escape_string($con, $_POST['username']);
     $email = mysqli_real_escape_string($con, $_POST['email']);
     $password = mysqli_real_escape_string($con, $_POST['password']);
@@ -31,7 +31,7 @@ if (isset($_POST['signup'])) {
         $code = rand(999999, 111111);
         $status = "notverified";
         $role = 'attendee';
-        $insert_data = "INSERT INTO usertable (name, username, email, password, code, status, role) VALUES ('$name', '$username', '$email', '$encpass', '$code', '$status', '$role')";
+        $insert_data = "INSERT INTO usertable (firstname, lastname, username, email, password, code, status, role) VALUES ('$firstname', '$lastname', '$username', '$email', '$encpass', '$code', '$status', '$role')";
         $data_check = mysqli_query($con, $insert_data);
         if ($data_check) {
             $subject = "Email Verification Code";
@@ -67,7 +67,6 @@ if (isset($_POST['check'])) {
         $update_otp = "UPDATE usertable SET code = $code, status = '$status' WHERE code = $fetch_code";
         $update_res = mysqli_query($con, $update_otp);
         if ($update_res) {
-            $_SESSION['name'] = $name;
             $_SESSION['email'] = $email;
             header('location: ../home.php');
             exit();
@@ -92,7 +91,8 @@ if (isset($_POST['login'])) {
         if (password_verify($password, $fetch_pass)) {
             $_SESSION['user_id'] = $fetch['id'];
             $_SESSION['username'] = $username;
-            $_SESSION['name'] = $fetch['name'];
+            $_SESSION['firstname'] = $fetch['firstname'];
+            $_SESSION['lastname'] = $fetch['lastname'];
             $_SESSION['role'] = $fetch['role'];
             $status = $fetch['status'];
             if ($status == 'verified') {

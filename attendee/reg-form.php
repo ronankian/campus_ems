@@ -21,13 +21,18 @@ if (isset($_GET['event_title'])) {
 
 // Get user_id from session (assuming user is logged in and user_id is stored in session)
 $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+$user_data = null;
+if ($user_id) {
+    $user_query = "SELECT firstname, lastname FROM usertable WHERE id = '$user_id'";
+    $user_result = mysqli_query($con, $user_query);
+    if ($user_result && mysqli_num_rows($user_result) > 0) {
+        $user_data = mysqli_fetch_assoc($user_result);
+    }
+}
 
 // Process form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get form data
-    $first_name = mysqli_real_escape_string($con, $_POST['first_name']);
-    $middle_initial = mysqli_real_escape_string($con, $_POST['middle_initial']);
-    $last_name = mysqli_real_escape_string($con, $_POST['last_name']);
     $year_level = mysqli_real_escape_string($con, $_POST['year_level']);
     $section = mysqli_real_escape_string($con, $_POST['section']);
     $student_number = mysqli_real_escape_string($con, $_POST['student_number']);
@@ -44,6 +49,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $event_row = mysqli_fetch_assoc($event_result);
         $event_id = $event_row['id'];
     }
+
+    // Use the user's firstname and lastname from usertable
+    $first_name = isset($user_data['firstname']) ? mysqli_real_escape_string($con, $user_data['firstname']) : '';
+    $last_name = isset($user_data['lastname']) ? mysqli_real_escape_string($con, $user_data['lastname']) : '';
 
     // Validation
     if (empty($first_name))
@@ -81,13 +90,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // If no errors, insert into database
     if (empty($errors)) {
-        $query = "INSERT INTO registers (user_id, event_id, first_name, middle_initial, last_name, year_level, section, student_number, contact_number, email, terms_accepted) 
-                  VALUES ('$user_id', '$event_id', '$first_name', '$middle_initial', '$last_name', '$year_level', '$section', '$student_number', '$contact_number', '$email', $terms_accepted)";
+        $query = "INSERT INTO registers (user_id, event_id, firstname, lastname, year_level, section, student_number, contact_number, email, terms_accepted) 
+                  VALUES ('$user_id', '$event_id', '$first_name', '$last_name', '$year_level', '$section', '$student_number', '$contact_number', '$email', $terms_accepted)";
 
         if (mysqli_query($con, $query)) {
             $success = true;
             // Clear form data after successful submission
-            $first_name = $middle_initial = $last_name = $year_level = $section = $student_number = $contact_number = $email = '';
+            $year_level = $section = $student_number = $contact_number = $email = '';
         } else {
             $errors[] = "Registration failed. Please try again.";
         }
@@ -258,23 +267,14 @@ if (!isset($_SESSION['user_id']) && isset($_SESSION['username'])) {
                     <div class="col-md-5 mb-3">
                         <label for="first_name" class="form-label">First Name</label>
                         <input type="text" class="form-control" id="first_name" name="first_name"
-                            value="<?php echo isset($first_name) ? htmlspecialchars($first_name) : ''; ?>" required
-                            pattern="[A-Za-z ]+" autocomplete="off"
-                            oninput="this.value = this.value.replace(/[^A-Za-z ]/g, '')">
+                            value="<?php echo isset($user_data['firstname']) ? htmlspecialchars($user_data['firstname']) : ''; ?>"
+                            readonly disabled>
                     </div>
-                    <div class="col-md-1 mb-3">
-                        <label for="middle_initial" class="form-label">M.I.</label>
-                        <input type="text" class="form-control" id="middle_initial" name="middle_initial" maxlength="1"
-                            value="<?php echo isset($middle_initial) ? htmlspecialchars(strtoupper($middle_initial)) : ''; ?>"
-                            pattern="[A-Za-z]" autocomplete="off" style="text-transform:uppercase"
-                            oninput="this.value = this.value.replace(/[^A-Za-z]/g, '').toUpperCase();">
-                    </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="last_name" class="form-label">Last Name</label>
                         <input type="text" class="form-control" id="last_name" name="last_name"
-                            value="<?php echo isset($last_name) ? htmlspecialchars($last_name) : ''; ?>" required
-                            pattern="[A-Za-z ]+" autocomplete="off"
-                            oninput="this.value = this.value.replace(/[^A-Za-z ]/g, '')">
+                            value="<?php echo isset($user_data['lastname']) ? htmlspecialchars($user_data['lastname']) : ''; ?>"
+                            readonly disabled>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="student_number" class="form-label">Student Number</label>
@@ -581,7 +581,10 @@ if (!isset($_SESSION['user_id']) && isset($_SESSION['username'])) {
 
                 <div class="mb-3 form-check">
                     <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
-                    <label class="form-check-label text-black" for="terms">I agree to the terms and conditions</label>
+                    <label class="form-check-label text-black" for="terms">
+                        I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">terms and
+                            conditions</a>
+                    </label>
                 </div>
 
                 <div class="text-center">
@@ -610,6 +613,9 @@ if (!isset($_SESSION['user_id']) && isset($_SESSION['username'])) {
             });
         });
     </script>
+
+    <!-- Add Terms and Conditions Modal -->
+    <?php include 'terms.php'; ?>
 
 </body>
 

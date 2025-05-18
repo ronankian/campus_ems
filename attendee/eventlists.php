@@ -58,13 +58,27 @@ session_start();
                                 JOIN create_events e ON r.event_id = e.id
                                 WHERE r.user_id = '$user_id' ORDER BY r.registration_date DESC";
                         $result = mysqli_query($con, $query);
+
+
+                        // Fetch events
+                        $query = "SELECT *, 
+                            CASE 
+                                WHEN status = 'active' OR status IS NULL THEN 1
+                                WHEN status = 'cancelled' THEN 2
+                                ELSE 3
+                            END AS status_order
+                            FROM create_events 
+                            WHERE user_id = '" . $_SESSION['user_id'] . "' 
+                            ORDER BY status_order ASC, date_time DESC";
+                        $result = mysqli_query($con, $query);
                         ?>
+
                         <div class="card shadow rounded-4 border-0">
                             <div class="card-body">
                                 <div class="table-responsive" style="min-height: 450px;">
                                     <table class="table table-hover table-bordered">
                                         <thead>
-                                            <tr>
+                                            <tr class="text-center align-middle">
                                                 <th>Event Title</th>
                                                 <th>Date & Time</th>
                                                 <th>Location</th>
@@ -76,7 +90,7 @@ session_start();
                                         <tbody>
                                             <?php if (mysqli_num_rows($result) === 0): ?>
                                                 <tr>
-                                                    <td colspan="6" class="text-center text-muted">No Registered Events
+                                                    <td colspan="6" class="text-center text-muted">No Registered Event
                                                         Found.</td>
                                                 </tr>
                                             <?php else: ?>

@@ -1,33 +1,44 @@
 <?php
+session_start();
+if (!isset($_SESSION['username']) || !isset($_SESSION['role'])) {
+    header('Location: ../login/login-user.php');
+    exit();
+}
+if ($_SESSION['role'] !== 'organizer' && $_SESSION['role'] !== 'admin') {
+    header('Location: ../attendee/account.php');
+    exit();
+}
 // Database connection
 $con = mysqli_connect('localhost', 'root', '', 'campus_ems');
 if (!$con) {
     die('Database connection failed: ' . mysqli_connect_error());
 }
 
+// Fetch current user info
+$user_id = $_SESSION['user_id'];
+$user_query = mysqli_query($con, "SELECT firstname, lastname, organization FROM usertable WHERE id = '$user_id' LIMIT 1");
+$user = mysqli_fetch_assoc($user_query);
+$fullname = $user ? $user['firstname'] . ' ' . $user['lastname'] : '';
+$org_name = $user ? $user['organization'] : '';
+
 $success = false;
 $errors = array();
-$event_data = [];
 
-// Fetch event data for editing
+// Detect edit mode
+$edit_mode = false;
+$event_data = [];
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $edit_mode = true;
     $event_id = intval($_GET['id']);
     $result = mysqli_query($con, "SELECT * FROM create_events WHERE id = $event_id LIMIT 1");
     if ($result && mysqli_num_rows($result) > 0) {
         $event_data = mysqli_fetch_assoc($result);
-        $event_data['co_organizer_name'] = !empty($event_data['co_organizer_name']) ? explode(',', $event_data['co_organizer_name']) : [];
-        $event_data['co_organizer_username'] = !empty($event_data['co_organizer_username']) ? explode(',', $event_data['co_organizer_username']) : [];
-        $event_data['co_organizer_org'] = !empty($event_data['co_organizer_org']) ? explode(',', $event_data['co_organizer_org']) : [];
         $event_data['related_links'] = !empty($event_data['related_links']) ? json_decode($event_data['related_links'], true) : [];
-        $event_data['attach_file'] = !empty($event_data['attach_file']) ? json_decode($event_data['attach_file'], true) : [];
-    } else {
-        $errors[] = 'Event not found.';
     }
-} else {
-    $errors[] = 'No event selected for editing.';
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
+// Revert to original: process form on any POST request
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get form data
     $event_title = mysqli_real_escape_string($con, $_POST['event_title']);
     $event_description = mysqli_real_escape_string($con, $_POST['event_description']);
@@ -36,35 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
     $category = mysqli_real_escape_string($con, $_POST['category']);
     $contact = mysqli_real_escape_string($con, $_POST['contact']);
     $other_contact = isset($_POST['other_contact']) ? mysqli_real_escape_string($con, $_POST['other_contact']) : '';
-    $organizer_name = mysqli_real_escape_string($con, $_POST['organizer_name']);
-    $organizer_username = mysqli_real_escape_string($con, $_POST['organizer_username']);
-    $organizer_org = mysqli_real_escape_string($con, $_POST['organizer_org']);
-
-    // Related links as JSON
     $related_links = isset($_POST['related_links']) ? json_encode(array_filter($_POST['related_links'])) : null;
 
-    // Co-organizers as comma-separated strings
-    $names = isset($_POST['co_organizer_name']) && is_array($_POST['co_organizer_name']) ? $_POST['co_organizer_name'] : [];
-    $usernames = isset($_POST['co_organizer_username']) && is_array($_POST['co_organizer_username']) ? $_POST['co_organizer_username'] : [];
-    $orgs = isset($_POST['co_organizer_org']) && is_array($_POST['co_organizer_org']) ? $_POST['co_organizer_org'] : [];
-    $final_names = [];
-    $final_usernames = [];
-    $final_orgs = [];
-    for ($i = 0; $i < count($names); $i++) {
-        $name = trim($names[$i]);
-        $username = trim($usernames[$i]);
-        $org = trim($orgs[$i]);
-        if ($name !== '' || $username !== '' || $org !== '') {
-            $final_names[] = $name;
-            $final_usernames[] = $username;
-            $final_orgs[] = $org;
-        }
-    }
-    $co_organizer_name = mysqli_real_escape_string($con, implode(',', $final_names));
-    $co_organizer_username = mysqli_real_escape_string($con, implode(',', $final_usernames));
-    $co_organizer_org = mysqli_real_escape_string($con, implode(',', $final_orgs));
-
-    // File upload (multiple files, max 10)
+    // File upload (single file, max 1)
     $attach_files = [];
     if (isset($_FILES['attach_file']) && count($_FILES['attach_file']['name']) > 0) {
         $maxFileSize = 5 * 1024 * 1024; // 5MB
@@ -95,48 +80,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
             }
         }
     }
-    // Handle removal of existing files
-    if (isset($_POST['remove_existing_files']) && is_array($_POST['remove_existing_files']) && !empty($event_data['attach_file'])) {
-        $files = $event_data['attach_file'];
-        foreach ($_POST['remove_existing_files'] as $remove_idx) {
-            $remove_idx = intval($remove_idx);
-            if (isset($files[$remove_idx])) {
-                $file_to_remove = $files[$remove_idx];
-                $file_path = __DIR__ . '/../uploads/' . $file_to_remove;
-                if (file_exists($file_path)) {
-                    @unlink($file_path);
-                }
-                unset($files[$remove_idx]);
-            }
-        }
-        // Re-index array
-        $files = array_values($files);
-        $event_data['attach_file'] = $files;
-    }
-    // If no new files uploaded, keep previous files (after removal)
-    $attach_files_json = !empty($attach_files) ? json_encode($attach_files) : (isset($event_data['attach_file']) ? json_encode($event_data['attach_file']) : null);
+    $attach_files_json = !empty($attach_files) ? json_encode($attach_files) : null;
 
-    // Update event in database if no errors
+    // Insert or update into database if no errors
     if (empty($errors)) {
-        $query = "UPDATE create_events SET event_title=?, event_description=?, date_time=?, location=?, category=?, contact=?, other_contact=?, related_links=?, attach_file=?, organizer_name=?, organizer_username=?, organizer_org=?, co_organizer_name=?, co_organizer_username=?, co_organizer_org=?, updated_at=NOW() WHERE id=?";
-        $stmt = mysqli_prepare($con, $query);
-        mysqli_stmt_bind_param($stmt, 'sssssssssssssssi', $event_title, $event_description, $date_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $organizer_name, $organizer_username, $organizer_org, $co_organizer_name, $co_organizer_username, $co_organizer_org, $event_id);
-        if (mysqli_stmt_execute($stmt)) {
-            $success = true;
-            // Refresh event data for pre-fill after update
-            $result = mysqli_query($con, "SELECT * FROM create_events WHERE id = $event_id LIMIT 1");
-            if ($result && mysqli_num_rows($result) > 0) {
-                $event_data = mysqli_fetch_assoc($result);
-                $event_data['co_organizer_name'] = !empty($event_data['co_organizer_name']) ? explode(',', $event_data['co_organizer_name']) : [];
-                $event_data['co_organizer_username'] = !empty($event_data['co_organizer_username']) ? explode(',', $event_data['co_organizer_username']) : [];
-                $event_data['co_organizer_org'] = !empty($event_data['co_organizer_org']) ? explode(',', $event_data['co_organizer_org']) : [];
-                $event_data['related_links'] = !empty($event_data['related_links']) ? json_decode($event_data['related_links'], true) : [];
-                $event_data['attach_file'] = !empty($event_data['attach_file']) ? json_decode($event_data['attach_file'], true) : [];
+        if ($edit_mode) {
+            // Update event
+            $query = "UPDATE create_events SET event_title=?, event_description=?, date_time=?, location=?, category=?, contact=?, other_contact=?, related_links=?, attach_file=?, fullname=?, organization=?, user_id=?, updated_at=NOW() WHERE id=?";
+            $stmt = mysqli_prepare($con, $query);
+            mysqli_stmt_bind_param($stmt, 'sssssssssssii', $event_title, $event_description, $date_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $org_name, $user_id, $event_id);
+            if (mysqli_stmt_execute($stmt)) {
+                $success = true;
+            } else {
+                $errors[] = 'Database error: ' . mysqli_error($con);
             }
+            mysqli_stmt_close($stmt);
         } else {
-            $errors[] = 'Database error: ' . mysqli_error($con);
+            // Insert event
+            $query = "INSERT INTO create_events (event_title, event_description, date_time, location, category, contact, other_contact, related_links, attach_file, fullname, organization, user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+            $stmt = mysqli_prepare($con, $query);
+            mysqli_stmt_bind_param($stmt, 'sssssssssssi', $event_title, $event_description, $date_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $org_name, $user_id);
+            if (mysqli_stmt_execute($stmt)) {
+                $success = true;
+            } else {
+                $errors[] = 'Database error: ' . mysqli_error($con);
+            }
+            mysqli_stmt_close($stmt);
         }
-        mysqli_stmt_close($stmt);
     }
 }
 ?>
@@ -149,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
     <title>Create Event</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         .form-container {
             max-width: 900px;
@@ -165,6 +136,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
             color: #333;
         }
 
+        label.form-label {
+            color: black !important;
+        }
+
         .add-btn,
         .remove-btn {
             cursor: pointer;
@@ -173,6 +148,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
         .file-size-info {
             font-size: 0.9em;
             color: #888;
+        }
+
+        #file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
         .file-chip {
@@ -188,15 +169,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
             padding: 0.25rem 1rem;
         }
 
-        .file-chip .file-name {
-            display: block;
-            min-width: 0;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
         .file-chip .btn-remove-file {
             margin-left: 1rem;
             width: 2rem;
@@ -206,42 +178,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
             justify-content: center;
         }
 
-        #file-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        .file-chip .file-name {
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
         }
     </style>
 </head>
 
 <body>
 
-    <?php include '../navbar-user.php'; ?>
+    <?php include '../navbar.php'; ?>
+    <?php include '../bg-image.php'; ?>
 
-    <div class="py-4 mb-3"></div>
-
-    <div class="container mb-3">
+    <div class="container">
         <nav aria-label="breadcrumb">
-            <ol class="breadcrumb p-3">
+            <ol class="breadcrumb mb-5" style="background: transparent; color: #fff;">
                 <li class="breadcrumb-item">
-                    <a class="link-body-emphasis" href="#">
+                    <a class="link" href="../home.php" style="color: #fff;">
                         <i class="fa fa-home" aria-hidden="true"></i>
                         <span class="visually-hidden">Home</span>
                     </a>
                 </li>
                 <li class="breadcrumb-item">
-                    <a class="link-body-emphasis fw-semibold text-decoration-none" href="dashboard.php">Dashboard</a>
+                    <a class="fw-semibold text-decoration-none" href="../events.php" style="color: #fff;">
+                        Events
+                    </a>
                 </li>
-                <li class="breadcrumb-item active" aria-current="page">
-                    Event Creation Form (Edit)
+                <li class="breadcrumb-item active" aria-current="page" style="color: #fff;">
+                    Event Creation Form
                 </li>
             </ol>
+
+            <style>
+                .breadcrumb {
+                    --bs-breadcrumb-divider-color: #fff;
+                }
+
+                .breadcrumb-item+.breadcrumb-item::before {
+                    color: #fff !important;
+                }
+            </style>
         </nav>
     </div>
 
     <div class="container mt-2">
         <div class="form-container">
-            <h2 class="form-title">Event Creation Form</h2>
+            <h2 class="form-title">Event Creation Form (Edit)</h2>
 
             <?php if (!empty($errors)): ?>
                 <div class="alert alert-danger">
@@ -274,52 +259,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
                     <div class="col-md-8 mb-3">
                         <label for="event_title" class="form-label">Event Title</label>
                         <input type="text" class="form-control" id="event_title" name="event_title" required
-                            value="<?php echo isset($event_data['event_title']) ? htmlspecialchars($event_data['event_title']) : ''; ?>">
+                            maxlength="50"
+                            value="<?php echo $edit_mode ? htmlspecialchars($event_data['event_title']) : ''; ?>">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="category" class="form-label">Category</label>
                         <select class="form-select" id="category" name="category" required>
                             <option value="">Select Category</option>
-                            <option value="Seminar" <?php echo isset($event_data['category']) && $event_data['category'] === 'Seminar' ? 'selected' : ''; ?>>Seminar</option>
-                            <option value="Workshop" <?php echo isset($event_data['category']) && $event_data['category'] === 'Workshop' ? 'selected' : ''; ?>>Workshop</option>
-                            <option value="Conference" <?php echo isset($event_data['category']) && $event_data['category'] === 'Conference' ? 'selected' : ''; ?>>Conference</option>
-                            <option value="Sports" <?php echo isset($event_data['category']) && $event_data['category'] === 'Sports' ? 'selected' : ''; ?>>Sports</option>
-                            <option value="Cultural" <?php echo isset($event_data['category']) && $event_data['category'] === 'Cultural' ? 'selected' : ''; ?>>Cultural</option>
-                            <option value="Celebration" <?php echo isset($event_data['category']) && $event_data['category'] === 'Celebration' ? 'selected' : ''; ?>>Celebration</option>
-                            <option value="Competition" <?php echo isset($event_data['category']) && $event_data['category'] === 'Competition' ? 'selected' : ''; ?>>Competition</option>
-                            <option value="Training" <?php echo isset($event_data['category']) && $event_data['category'] === 'Training' ? 'selected' : ''; ?>>Training</option>
-                            <option value="Webinar" <?php echo isset($event_data['category']) && $event_data['category'] === 'Webinar' ? 'selected' : ''; ?>>Webinar</option>
-                            <option value="Outreach" <?php echo isset($event_data['category']) && $event_data['category'] === 'Outreach' ? 'selected' : ''; ?>>Outreach</option>
-                            <option value="Other" <?php echo isset($event_data['category']) && $event_data['category'] === 'Other' ? 'selected' : ''; ?>>Other</option>
+                            <option value="Seminar" <?php echo $edit_mode && $event_data['category'] === 'Seminar' ? 'selected' : ''; ?>>Seminar</option>
+                            <option value="Workshop" <?php echo $edit_mode && $event_data['category'] === 'Workshop' ? 'selected' : ''; ?>>Workshop</option>
+                            <option value="Conference" <?php echo $edit_mode && $event_data['category'] === 'Conference' ? 'selected' : ''; ?>>Conference</option>
+                            <option value="Sports" <?php echo $edit_mode && $event_data['category'] === 'Sports' ? 'selected' : ''; ?>>Sports</option>
+                            <option value="Cultural" <?php echo $edit_mode && $event_data['category'] === 'Cultural' ? 'selected' : ''; ?>>Cultural</option>
+                            <option value="Celebration" <?php echo $edit_mode && $event_data['category'] === 'Celebration' ? 'selected' : ''; ?>>Celebration</option>
+                            <option value="Competition" <?php echo $edit_mode && $event_data['category'] === 'Competition' ? 'selected' : ''; ?>>Competition</option>
+                            <option value="Training" <?php echo $edit_mode && $event_data['category'] === 'Training' ? 'selected' : ''; ?>>Training</option>
+                            <option value="Webinar" <?php echo $edit_mode && $event_data['category'] === 'Webinar' ? 'selected' : ''; ?>>Webinar</option>
+                            <option value="Other" <?php echo $edit_mode && $event_data['category'] === 'Other' ? 'selected' : ''; ?>>Other</option>
                         </select>
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="event_description" class="form-label">Event Description</label>
                     <textarea class="form-control" id="event_description" name="event_description" rows="3"
-                        required><?php echo isset($event_data['event_description']) ? htmlspecialchars($event_data['event_description']) : ''; ?></textarea>
+                        required><?php echo $edit_mode ? htmlspecialchars($event_data['event_description']) : ''; ?></textarea>
                 </div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="date_time" class="form-label">Date & Time</label>
                         <input type="datetime-local" class="form-control" id="date_time" name="date_time" required
-                            value="<?php echo isset($event_data['date_time']) ? htmlspecialchars($event_data['date_time']) : ''; ?>">
+                            value="<?php echo $edit_mode ? htmlspecialchars($event_data['date_time']) : ''; ?>">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="contact" class="form-label">Contact</label>
+                        <label for="contact" class="form-label">Contact Number</label>
                         <input type="text" class="form-control" id="contact" name="contact" required
-                            value="<?php echo isset($event_data['contact']) ? htmlspecialchars($event_data['contact']) : ''; ?>">
+                            value="<?php echo $edit_mode ? htmlspecialchars($event_data['contact']) : ''; ?>"
+                            pattern="[0-9]{7,11}" maxlength="11" minlength="7" inputmode="numeric"
+                            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11);">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="other_contact" class="form-label">Other Contact</label>
-                        <input type="text" class="form-control" id="other_contact" name="other_contact"
-                            value="<?php echo isset($event_data['other_contact']) ? htmlspecialchars($event_data['other_contact']) : ''; ?>">
+                        <input type="text" class="form-control" placeholder="Optional" id="other_contact"
+                            name="other_contact"
+                            value="<?php echo $edit_mode ? htmlspecialchars($event_data['other_contact']) : ''; ?>">
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="location" class="form-label">Location/Venue</label>
                     <input type="text" class="form-control" id="location" name="location" required
-                        value="<?php echo isset($event_data['location']) ? htmlspecialchars($event_data['location']) : ''; ?>">
+                        value="<?php echo $edit_mode ? htmlspecialchars($event_data['location']) : ''; ?>">
                 </div>
                 <!-- Related Links and Attach File in one row -->
                 <div class="row">
@@ -328,17 +316,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
                         <div id="related-links-group">
                             <?php
                             $links = [];
-                            if (!empty($event_data['related_links'])) {
+                            if ($edit_mode && !empty($event_data['related_links'])) {
                                 $links = $event_data['related_links'];
                             }
                             if (empty($links))
                                 $links[] = '';
-                            $last = count($links) - 1;
                             foreach ($links as $i => $link): ?>
                                 <div class="input-group mb-2 related-link-row">
                                     <input type="url" class="form-control" name="related_links[]"
                                         value="<?php echo htmlspecialchars($link); ?>" placeholder="https://example.com">
-                                    <?php if ($i == $last): ?>
+                                    <?php if ($i === 0): ?>
                                         <button class="btn btn-outline-secondary add-btn" type="button"><i
                                                 class="fa fa-plus"></i></button>
                                     <?php else: ?>
@@ -348,92 +335,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
                                 </div>
                             <?php endforeach; ?>
                         </div>
+                        <!-- Organizer Info -->
+                        <h5 class="mt-3 mb-3 text-black">Organizer Information</h5>
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="fullname" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="fullname" name="fullname"
+                                    value="<?php echo htmlspecialchars($fullname); ?>" readonly disabled>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="organization" class="form-label">Organization</label>
+                                <input type="text" class="form-control" id="organization" name="organization"
+                                    value="<?php echo htmlspecialchars($org_name); ?>" readonly disabled>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label for="attach_file" class="form-label">Attach File <span class="file-size-info">(Max
                                 5MB)</span></label>
                         <input type="file" class="form-control" id="attach_file" name="attach_file[]"
                             accept=".pdf,.doc,.docx,.jpg,.png,.jpeg">
-                        <div id="file-list" class="d-flex flex-column gap-2 mt-2">
-                            <?php if (!empty($event_data['attach_file'])): ?>
-                                <?php foreach ($event_data['attach_file'] as $idx => $file): ?>
-                                    <div class="file-chip existing-file-row">
-                                        <span class="file-name"
-                                            title="<?php echo htmlspecialchars($file); ?>"><?php echo htmlspecialchars($file); ?></span>
-                                        <button type="button" class="btn btn-outline-danger btn-remove-existing-file"
-                                            data-index="<?php echo $idx; ?>"><i class="fa fa-times"></i></button>
+                        <div id="image-preview-container" class="mt-2" style="max-width: 100%; overflow-x: hidden;">
+                        </div>
+                        <?php if ($edit_mode && !empty($event_data['attach_file'])):
+                            $existing_files = json_decode($event_data['attach_file'], true);
+                            if (!is_array($existing_files))
+                                $existing_files = [$event_data['attach_file']];
+                            foreach ($existing_files as $file):
+                                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                                if (in_array($ext, ['jpg', 'jpeg', 'png'])): ?>
+                                    <div id="existing-image-preview" class="mb-2 position-relative" style="display: inline-block;">
+                                        <img src="../uploads/<?php echo htmlspecialchars($file); ?>" alt="Attached Image"
+                                            style="width: 100%; max-width: 320px; height: 150px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">
+                                        <button type="button" id="remove-existing-image"
+                                            class="btn btn-outline-danger rounded-circle"
+                                            style="position: absolute; top: 8px; right: 8px;">
+                                            <i class="fa fa-times"></i>
+                                        </button>
                                     </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </div>
+                                    <input type="hidden" name="keep_existing_image" id="keep_existing_image" value="1">
+                                <?php endif;
+                            endforeach;
+                        endif; ?>
                     </div>
                 </div>
-                <!-- Organizer Info -->
-                <h5 class="mt-3 mb-3">Organizer's Information</h5>
-                <div class="row">
-                    <div class="col-md-5 mb-3">
-                        <label for="organizer_name" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="organizer_name" name="organizer_name" required
-                            value="<?php echo isset($event_data['organizer_name']) ? htmlspecialchars($event_data['organizer_name']) : ''; ?>"
-                            placeholder="Organizer Name">
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="organizer_username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="organizer_username" name="organizer_username"
-                            required
-                            value="<?php echo isset($event_data['organizer_username']) ? htmlspecialchars($event_data['organizer_username']) : ''; ?>"
-                            placeholder="@username">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="organizer_org" class="form-label">Organization Name</label>
-                        <?php include 'org.php'; ?>
-                    </div>
-                </div>
-                <!-- Co-Organizers -->
-                <div class="mb-3">
-                    <h5 class="mb-3">Co-Organizer's Information</h5>
-                    <!-- Single label row -->
-                    <div class="row mb-1">
-                        <div class="col-md-5"><label class="form-label">Full Name</label></div>
-                        <div class="col-md-3"><label class="form-label">Username</label></div>
-                        <div class="col-md-3"><label class="form-label">Organization Name</label></div>
-                        <div class="col-md-1"></div>
-                    </div>
-                    <div id="co-organizers-group">
-                        <?php foreach ($event_data['co_organizer_name'] as $index => $name): ?>
-                            <div class="row gy-2 co-organizer-row">
-                                <div class="col-md-5">
-                                    <input type="text" class="form-control" name="co_organizer_name[]"
-                                        value="<?php echo htmlspecialchars($name); ?>" placeholder="Co-Organizer Name">
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="text" class="form-control" name="co_organizer_username[]"
-                                        value="<?php echo htmlspecialchars($event_data['co_organizer_username'][$index]); ?>"
-                                        placeholder="@username">
-                                </div>
-                                <div class="col-md-3">
-                                    <?php include 'co-org.php'; ?>
-                                </div>
-                                <div class="col-md-1 d-flex align-items-center">
-                                    <!-- Remove button only for extra rows, added by JS -->
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="row mt-2">
-                        <div class="col-md-1">
-                            <button class="btn btn-outline-secondary add-co-btn" type="button"><i
-                                    class="fa fa-plus"></i></button>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Apply Changes</button>
-                    <a href="eventlists.php" class="btn btn-secondary ms-2">Cancel Edit</a>
+                <div class="text-center d-flex justify-content-center gap-3 mt-4">
+                    <button type="submit" class="btn btn-primary">Confirm</button>
+                    <a href="eventlists.php" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
         </div>
     </div>
+    <?php include '../footer.php'; ?>
     <script>
         // Related Links add/remove
         document.addEventListener('DOMContentLoaded', function () {
@@ -448,116 +401,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($event_id)) {
                     e.target.closest('.related-link-row').remove();
                 }
             });
-
-            // Co-Organizers add/remove
-            const coGroup = document.getElementById('co-organizers-group');
-            const addBtn = document.querySelector('.add-co-btn');
-            addBtn.addEventListener('click', function () {
-                const newRow = document.createElement('div');
-                newRow.className = 'row co-organizer-row my-2';
-                newRow.innerHTML = `
-                    <div class="col-md-5">
-                        <input type="text" class="form-control" name="co_organizer_name[]" placeholder="Co-Organizer Name" required>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control" name="co_organizer_username[]" placeholder="Username" required>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select co-organization-select" name="co_organizer_org[]" required>
-                            <option value="">Select Organization</option>
-                            <optgroup label="Academic Organization">
-                                <option value="ACES" title="Association of Computer Engineering Students">ACES</option>
-                                <option value="AHMS" title="Association of Hospitality Management Students">AHMS</option>
-                                <option value="BYTE" title="Beacon of Youth Technology Enthusiasts">BYTE</option>
-                                <option value="CODE" title="Computer Scientists and Developers Society">CO:DE</option>
-                                <option value="FCWTS" title="Federation of Civic Welfare Training Service">FCWTS</option>
-                                <option value="FEO" title="Future Educators Organization">FEO</option>
-                                <option value="IIEE-CSC" title="Institute of Integrated Electrical Engineers – Council Student Chapters">IIEE-CSC</option>
-                                <option value="JHSO" title="Junior High Student Organization">JHSO</option>
-                                <option value="JMA" title="Junior Marketing Association">JMA</option>
-                                <option value="SHSO" title="Senior High Student Organization">SHSO</option>
-                                <option value="SITS" title="Society of Industrial Technology Students">SITS</option>
-                                <option value="SPEAR" title="Sports Physical Education and Recreation Club">SPEAR</option>
-                            </optgroup>
-                            <optgroup label="Non-Academic Organization">
-                                <option value="CCERT" title="CvSU-CCAT Emergency Response Team">CCERT</option>
-                                <option value="NEXUS" title="The CvSU-R Nexus (Official Student Publication)">NEXUS</option>
-                                <option value="ROTARACT" title="Rotaract Club of CvSU-CCAT">ROTARACT</option>
-                                <option value="SEC" title="Sikat E-Sports Club">SEC</option>
-                            </optgroup>
-                            <optgroup label="Performing Arts Groups">
-                                <option value="ARTRADS" title="ARTRADS Dance Crew">ARTRADS Dance Crew</option>
-                                <option value="CHORALE" title="CvSU-CCAT Chorale">CvSU-CCAT Chorale</option>
-                                <option value="SONIC-PISTONS" title="CvSU-CCAT Sonic Pistons Live Band">CvSU-CCAT Sonic Pistons Live Band</option>
-                            </optgroup>
-                            <optgroup label="Student Body Organization">
-                                <option value="CSG" title="Central Student Government of CvSU-CCAT">CSG</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                    <div class="col-md-1 d-flex align-items-center">
-                        <button class="btn btn-outline-danger remove-co-btn" type="button"><i class="fa fa-times"></i></button>
-                    </div>
-                `;
-                coGroup.appendChild(newRow);
-                // Initialize Select2 for the new select
-                $(newRow).find('.co-organization-select').select2({
-                    width: '100%',
-                    placeholder: 'Select Organization',
-                    allowClear: true
-                });
-            });
-            coGroup.addEventListener('click', function (e) {
-                if (e.target.classList.contains('remove-co-btn') || e.target.closest('.remove-co-btn')) {
-                    e.target.closest('.co-organizer-row').remove();
-                }
-            });
         });
 
-        // Attach file: limit to 10 files client-side
+        // Attach file
         $(document).ready(function () {
             $('#attach_file').on('change', function () {
                 if (this.files.length > 10) {
-                    alert('You can only upload a maximum of 10 files.');
+                    alert('You can only upload a maximum of 5MB.');
                     this.value = '';
                 }
             });
         });
 
-        // File input preview and removal
-        const fileInput = document.getElementById('attach_file');
-        const fileList = document.getElementById('file-list');
-        fileInput.addEventListener('change', function () {
-            // Remove only the new file preview rows
-            fileList.querySelectorAll('.new-file-row').forEach(e => e.remove());
-            const file = fileInput.files[0];
-            if (file) {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-chip new-file-row';
-                fileItem.innerHTML = `
-                    <span class="file-name" title="${file.name}">${file.name}</span>
-                    <button type="button" class="btn btn-outline-danger btn-remove-file"><i class="fa fa-times"></i></button>
-                `;
-                fileList.appendChild(fileItem);
-                // Remove file from input when X is clicked
-                fileList.querySelector('.btn-remove-file').addEventListener('click', function () {
-                    fileInput.value = '';
-                    fileItem.remove();
+        // Image preview and removal for image files
+        document.addEventListener('DOMContentLoaded', function () {
+            const attachFileInput = document.getElementById('attach_file');
+            const imagePreviewContainer = document.getElementById('image-preview-container');
+            attachFileInput.addEventListener('change', function () {
+                imagePreviewContainer.innerHTML = '';
+                const file = this.files[0];
+                if (file && file.type.match('image.*')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const previewDiv = document.createElement('div');
+                        previewDiv.style.position = 'relative';
+                        previewDiv.style.display = 'inline-block';
+                        previewDiv.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview" style="width: 100%; max-width: 320px; height: 150px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">
+                            <button type="button" class="btn btn-outline-danger rounded-circle" style="position: absolute; top: 8px; right: 8px;">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        `;
+                        imagePreviewContainer.appendChild(previewDiv);
+                        const removeBtn = previewDiv.querySelector('button');
+                        removeBtn.addEventListener('click', function () {
+                            attachFileInput.value = '';
+                            imagePreviewContainer.innerHTML = '';
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+
+        // Remove existing image preview
+        document.addEventListener('DOMContentLoaded', function () {
+            var removeBtn = document.getElementById('remove-existing-image');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function () {
+                    var preview = document.getElementById('existing-image-preview');
+                    if (preview) preview.style.display = 'none';
+                    var keepInput = document.getElementById('keep_existing_image');
+                    if (keepInput) keepInput.value = '0';
                 });
             }
-        });
-        // Remove existing file (AJAX or mark for removal)
-        fileList.querySelectorAll('.btn-remove-existing-file').forEach(btn => {
-            btn.addEventListener('click', function () {
-                this.parentElement.remove();
-                // Optionally, add a hidden input to mark this file for removal on submit
-                const idx = this.getAttribute('data-index');
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'remove_existing_files[]';
-                input.value = idx;
-                fileList.appendChild(input);
-            });
         });
     </script>
 </body>

@@ -67,6 +67,18 @@ session_start();
                     $event = mysqli_fetch_assoc($result);
                 }
             }
+            $already_registered = false;
+            $reg_id = null;
+            if (isset($_SESSION['user_id']) && isset($event['id'])) {
+                $user_id = $_SESSION['user_id'];
+                $event_id = $event['id'];
+                $reg_check = mysqli_query($con, "SELECT id FROM registers WHERE user_id = '$user_id' AND event_id = '$event_id' LIMIT 1");
+                if ($reg_check && mysqli_num_rows($reg_check) > 0) {
+                    $already_registered = true;
+                    $reg_row = mysqli_fetch_assoc($reg_check);
+                    $reg_id = $reg_row['id'];
+                }
+            }
             ?>
             <div class="col-md-8 mx-auto">
                 <?php if ($event): ?>
@@ -185,7 +197,7 @@ session_start();
                         </div>
                         <div class="mb-2">
                             <label>
-                                <h5>Organizers</h5>
+                                <h5>Organizer</h5>
                             </label>
                             <div class="mb-2"
                                 style="padding:4px 8px; border-radius:3px; background: transparent; color: #fff;">
@@ -194,17 +206,6 @@ session_start();
                                 if (!empty($event['organizer_name'])) {
                                     $orgs[] = htmlspecialchars($event['organizer_name']) .
                                         (isset($event['organizer_org']) && $event['organizer_org'] ? ' (' . htmlspecialchars($event['organizer_org']) . ')' : '');
-                                }
-                                if (!empty($event['co_organizer_name'])) {
-                                    $co_names = explode(',', $event['co_organizer_name']);
-                                    $co_orgs = !empty($event['co_organizer_org']) ? explode(',', $event['co_organizer_org']) : [];
-                                    foreach ($co_names as $i => $name) {
-                                        $name = trim($name);
-                                        if ($name) {
-                                            $org = isset($co_orgs[$i]) ? trim($co_orgs[$i]) : '';
-                                            $orgs[] = htmlspecialchars($name) . ($org ? ' (' . htmlspecialchars($org) . ')' : '');
-                                        }
-                                    }
                                 }
                                 echo implode(', ', $orgs);
                                 ?>
@@ -256,11 +257,26 @@ session_start();
                             <i class="fa fa-calendar-days me-2"></i> Other Events
                         </a>';
                     } else {
-                        $register_link = (isset($_SESSION['role']) && !empty($_SESSION['role']))
-                            ? 'attendee/reg-form.php?event_title=' . urlencode($event['event_title'])
-                            : 'login/login-user.php';
-                        echo '<a href="' . $register_link . '" class="btn btn-success btn-lg mt-2" style="font-weight: bold; letter-spacing: 1px; width: 100%;">
+                        if (isset($_SESSION['role']) && !empty($_SESSION['role'])) {
+                            if ($already_registered && $reg_id) {
+                                $register_link = 'attendee/view.php?reg_id=' . $reg_id;
+                            } else {
+                                $register_link = 'attendee/reg-form.php?event_title=' . urlencode($event['event_title']);
+                            }
+                        } else {
+                            $register_link = 'login/login-user.php';
+                        }
+                        echo '<a href="' . $register_link . '" class="btn btn-outline-success btn-lg mt-2 w-100" style="font-weight: bold; letter-spacing: 1px;">
                             <i class="fa fa-plus me-2"></i> Register
+                        </a>';
+                    }
+                    if (isset($_SESSION['role']) && $_SESSION['role'] === 'attendee') {
+                        echo '<a href="attendee/create.php?event_id=' . $event['id'] . '" class="btn btn-outline-danger btn-lg mt-4 w-100" style="font-weight: bold; letter-spacing: 1px;">
+                            <i class="fa fa-flag me-2"></i> Report
+                        </a>';
+                    } elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'organizer') {
+                        echo '<a href="organizer/edit-form.php?id=' . $event['id'] . '" class="btn btn-outline-warning btn-lg mt-4 w-100" style="font-weight: bold; letter-spacing: 1px;">
+                            <i class="fa fa-edit me-2"></i> Edit
                         </a>';
                     }
                     ?>
@@ -279,7 +295,6 @@ session_start();
         </div>
     </div>
     <?php include 'footer.php'; ?>
-    </div>
 
 </body>
 

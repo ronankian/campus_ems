@@ -67,7 +67,7 @@ session_start();
                                                 <th>Event Title</th>
                                                 <th>Date & Time</th>
                                                 <th>Location</th>
-                                                <th>Organizers</th>
+                                                <th>Organizer</th>
                                                 <th>Status</th>
                                                 <th>Actions</th>
                                             </tr>
@@ -90,10 +90,6 @@ session_start();
 
                                                 // Combine organizer and co-organizers
                                                 $organizers = $row['organizer_name'];
-                                                if (!empty($row['co_organizer_name'])) {
-                                                    $co_organizers = explode(',', $row['co_organizer_name']);
-                                                    $organizers .= ', ' . implode(', ', $co_organizers);
-                                                }
                                                 ?>
                                                 <tr>
                                                     <td><?php echo htmlspecialchars($row['event_title']); ?></td>

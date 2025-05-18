@@ -180,7 +180,7 @@ session_start();
                                         <input type="text" class="form-control" id="title" name="title" required
                                             value="<?php echo isset($title) ? htmlspecialchars($title) : ''; ?>">
                                     </div>
-                                    <div class="mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <label for="subject_type" class="form-label">Subject</label>
                                         <select class="form-select" id="subject_type" name="subject_type" required
                                             onchange="toggleCustomSubject(this.value)">

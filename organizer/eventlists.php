@@ -11,28 +11,41 @@ session_start();
     <title>EventHub Attendee Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <style>
+        .dashboard-container {
+            border-radius: 6px;
+            backdrop-filter: blur(8px);
+        }
 
+        .card-summary {
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-summary .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
 
 </head>
 
 <body>
 
     <?php include '../navbar.php'; ?>
+    <?php include '../bg-image.php'; ?>
 
-    <div class="py-5"></div>
+    <div class="container">
 
-    <div class="container mt-3">
-
-        <div class="row">
-
+        <div class="row dashboard-container p-3 py-4">
             <?php include 'sidebar.php'; ?>
 
-            <div class="col-md-9 ps-0">
-                <div class="row mb-4">
+            <div class="col-md-9 ps-4">
+                <div class="row">
 
                     <!-- Section Title -->
                     <div class="col-12">
-                        <h4 class="fw-bold"> Event Management</h4>
+                        <h4 class="fw-bold mb-3"> Event Management</h4>
                     </div>
 
                     <div class="eventlists col-12">
@@ -44,7 +57,15 @@ session_start();
                         }
 
                         // Fetch events
-                        $query = "SELECT * FROM create_events ORDER BY date_time DESC";
+                        $query = "SELECT *, 
+                            CASE 
+                                WHEN status = 'active' OR status IS NULL THEN 1
+                                WHEN status = 'cancelled' THEN 2
+                                ELSE 3
+                            END AS status_order
+                            FROM create_events 
+                            WHERE user_id = '" . $_SESSION['user_id'] . "' 
+                            ORDER BY status_order ASC, date_time DESC";
                         $result = mysqli_query($con, $query);
 
                         // Add status column if it doesn't exist
@@ -60,73 +81,78 @@ session_start();
 
                         <div class="card shadow rounded-4 border-0">
                             <div class="card-body">
-                                <div class="table-responsive">
+                                <div class="table-responsive" style="min-height: 450px;">
                                     <table class="table table-hover table-bordered">
                                         <thead>
-                                            <tr>
+                                            <tr class="text-center align-middle">
                                                 <th>Event Title</th>
                                                 <th>Date & Time</th>
                                                 <th>Location</th>
-                                                <th>Organizers</th>
+                                                <th>Organizer</th>
                                                 <th>Status</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php while ($row = mysqli_fetch_assoc($result)):
-                                                // Get current date and event date
-                                                $current_date = new DateTime();
-                                                $event_date = new DateTime($row['date_time']);
-
-                                                // Determine status
-                                                $status = '';
-                                                if (isset($row['status']) && $row['status'] === 'cancelled') {
-                                                    $status = '<span class="badge bg-danger">Cancelled</span>';
-                                                } else if ($current_date > $event_date) {
-                                                    $status = '<span class="badge bg-secondary">Ended</span>';
-                                                } else {
-                                                    $status = '<span class="badge bg-success">Active</span>';
-                                                }
-
-                                                // Combine organizer and co-organizers
-                                                $organizers = $row['organizer_name'];
-                                                if (!empty($row['co_organizer_name'])) {
-                                                    $co_organizers = explode(',', $row['co_organizer_name']);
-                                                    $organizers .= ', ' . implode(', ', $co_organizers);
-                                                }
-                                                ?>
+                                            <?php if (mysqli_num_rows($result) === 0): ?>
                                                 <tr>
-                                                    <td><?php echo htmlspecialchars($row['event_title']); ?></td>
-                                                    <td><?php echo date('M d, Y h:i A', strtotime($row['date_time'])); ?>
-                                                    </td>
-                                                    <td><?php echo htmlspecialchars($row['location']); ?></td>
-                                                    <td><?php echo htmlspecialchars($organizers); ?></td>
-                                                    <td><?php echo $status; ?></td>
-                                                    <td>
-                                                        <div class="dropdown">
-                                                            <button class="btn btn-sm btn-secondary dropdown-toggle"
-                                                                type="button" id="dropdownMenu<?php echo $row['id']; ?>"
-                                                                data-bs-toggle="dropdown" aria-expanded="false">
-                                                                Actions
-                                                            </button>
-                                                            <ul class="dropdown-menu"
-                                                                aria-labelledby="dropdownMenu<?php echo $row['id']; ?>">
-                                                                <li><a class="dropdown-item"
-                                                                        href="/campus_ems/event-details.php?id=<?php echo $row['id']; ?>">View
-                                                                        Details</a></li>
-                                                                <li><a class="dropdown-item"
-                                                                        href="edit-form.php?id=<?php echo $row['id']; ?>">Edit</a>
-                                                                </li>
-                                                                <?php if (!isset($row['status']) || $row['status'] !== 'cancelled'): ?>
-                                                                    <li><a class="dropdown-item" href="javascript:void(0)"
-                                                                            onclick="confirmCancel(<?php echo $row['id']; ?>)">Cancel
-                                                                            Event</a></li>
-                                                                <?php endif; ?>
-                                                            </ul>
-                                                        </div>
+                                                    <td colspan="6" class="text-center text-muted">No Created Event Found.
                                                     </td>
                                                 </tr>
-                                            <?php endwhile; ?>
+                                            <?php else: ?>
+                                                <?php while ($row = mysqli_fetch_assoc($result)):
+                                                    // Get current date and event date
+                                                    $current_date = new DateTime();
+                                                    $event_date = new DateTime($row['date_time']);
+
+                                                    // Determine status
+                                                    $status = '';
+                                                    if (isset($row['status']) && $row['status'] === 'cancelled') {
+                                                        $status = '<span class="badge bg-danger">Cancelled</span>';
+                                                    } else if ($current_date > $event_date) {
+                                                        $status = '<span class="badge bg-secondary">Ended</span>';
+                                                    } else {
+                                                        $status = '<span class="badge bg-success">Active</span>';
+                                                    }
+
+                                                    // Combine organizer and co-organizers
+                                                    $organizers = $row['fullname'];
+                                                    ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($row['event_title']); ?></td>
+                                                        <td><?php echo date('M d, Y | h:i A', strtotime($row['date_time'])); ?>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($row['location']); ?></td>
+                                                        <td><?php echo htmlspecialchars($organizers); ?></td>
+                                                        <td><?php echo $status; ?></td>
+                                                        <td>
+                                                            <div class="dropdown">
+                                                                <button class="btn btn-sm btn-secondary dropdown-toggle"
+                                                                    type="button" id="dropdownMenu<?php echo $row['id']; ?>"
+                                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    Actions
+                                                                </button>
+                                                                <ul class="dropdown-menu"
+                                                                    aria-labelledby="dropdownMenu<?php echo $row['id']; ?>">
+                                                                    <li><a class="dropdown-item"
+                                                                            href="/campus_ems/event-details.php?id=<?php echo $row['id']; ?>">View
+                                                                            Details</a></li>
+                                                                    <?php if ((!isset($row['status']) || $row['status'] !== 'cancelled') && (new DateTime() <= new DateTime($row['date_time']))): ?>
+                                                                        <li><a class="dropdown-item"
+                                                                                href="edit-form.php?id=<?php echo $row['id']; ?>">Edit</a>
+                                                                        </li>
+                                                                    <?php endif; ?>
+                                                                    <?php if ((!isset($row['status']) || $row['status'] !== 'cancelled') && (new DateTime() <= new DateTime($row['date_time']))): ?>
+                                                                        <li><a class="dropdown-item" href="javascript:void(0)"
+                                                                                onclick="confirmCancel(<?php echo $row['id']; ?>)">Cancel
+                                                                                Event</a></li>
+                                                                    <?php endif; ?>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php endwhile; ?>
+                                            <?php endif; ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -138,7 +164,26 @@ session_start();
             </div>
         </div>
     </div>
+    <?php include '../footer.php'; ?>
 
+    <!-- Cancel Event Modal -->
+    <div class="modal fade" tabindex="-1" role="dialog" id="cancelEventModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content rounded-3 shadow">
+                <div class="modal-body p-4 text-center text-black">
+                    <h5 class="mb-2">Cancel Event</h5>
+                    <p class="mb-0">Are you sure you want to cancel this event?</p>
+                </div>
+                <div class="modal-footer flex-nowrap p-0">
+                    <button type="button"
+                        class="btn btn-lg btn-link fs-6 text-decoration-none text-danger col-6 py-3 m-0 rounded-0 border-end"
+                        id="confirmCancelBtn"><strong>Yes, cancel</strong></button>
+                    <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 py-3 m-0 rounded-0"
+                        data-bs-dismiss="modal">No thanks</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Close all dropdowns when clicking outside
@@ -158,30 +203,46 @@ session_start();
             document.getElementById("dropdown-menu-" + id).classList.toggle("show");
         }
 
+        let eventIdToCancel = null;
         function confirmCancel(eventId) {
-            if (confirm('Are you sure you want to cancel this event?')) {
-                // Send AJAX request to update status
-                fetch('cancel_event.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'event_id=' + eventId
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert('Error cancelling event: ' + data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while cancelling the event');
-                    });
-            }
+            eventIdToCancel = eventId;
+            var cancelModal = new bootstrap.Modal(document.getElementById('cancelEventModal'));
+            cancelModal.show();
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var confirmBtn = document.getElementById('confirmCancelBtn');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', function () {
+                    if (eventIdToCancel) {
+                        // Send AJAX request to update status
+                        fetch('cancel_event.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: 'event_id=' + eventIdToCancel
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    location.reload();
+                                } else {
+                                    alert('Error cancelling event: ' + data.message);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('An error occurred while cancelling the event');
+                            });
+                        // Hide modal
+                        var cancelModal = bootstrap.Modal.getInstance(document.getElementById('cancelEventModal'));
+                        cancelModal.hide();
+                        eventIdToCancel = null;
+                    }
+                });
+            }
+        });
     </script>
 </body>
 

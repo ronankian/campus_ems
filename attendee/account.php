@@ -4,7 +4,7 @@ $con = mysqli_connect('localhost', 'root', '', 'campus_ems');
 $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0;
 // Handle About Me update BEFORE any output
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset($_POST['contact_no']) || isset($_POST['organization']))) {
-    $about_me = mysqli_real_escape_string($con, substr($_POST['about_me'], 0, 255));
+    $about_me = mysqli_real_escape_string($con, substr($_POST['about_me'], 0, 500));
     $contact_no = isset($_POST['contact_no']) ? mysqli_real_escape_string($con, $_POST['contact_no']) : '';
     $organization = isset($_POST['organization']) ? mysqli_real_escape_string($con, $_POST['organization']) : '';
     // Validate contact_no: numeric, 7-11 digits
@@ -115,16 +115,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                         <?php
                         $user = null;
                         if ($user_id) {
-                            $result = mysqli_query($con, "SELECT name, role, created_at, username, email, about, contact, organization FROM usertable WHERE id = '$user_id' LIMIT 1");
+                            $result = mysqli_query($con, "SELECT firstname, lastname, role, created_at, username, email, about, contact, organization FROM usertable WHERE id = '$user_id' LIMIT 1");
                             if ($result && mysqli_num_rows($result) > 0) {
                                 $user = mysqli_fetch_assoc($result);
                             }
                         }
                         if ($user):
-                            $name = $user['name'];
-                            $initial = strtoupper(substr($name, 0, 1));
-                            // Generate a consistent color from the name
-                            $hash = md5($name);
+                            $firstname = $user['firstname'];
+                            $lastname = $user['lastname'];
+                            $initial = strtoupper(substr($firstname, 0, 1));
+                            // Generate a consistent color from the firstname
+                            $hash = md5($firstname);
                             $r = hexdec(substr($hash, 0, 2));
                             $g = hexdec(substr($hash, 2, 2));
                             $b = hexdec(substr($hash, 4, 2));
@@ -142,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                             ?>
                             <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
                                 <div class="card shadow rounded-4 border-0 p-5 w-100"
-                                    style="max-width: 950px; margin: 0 auto; border-radius: 2rem; background: rgba(255,255,255,0.97);">
+                                    style="max-width: 950px; margin: 0 auto; border-radius: 2rem; background: #fff;">
                                     <div class="d-flex flex-column align-items-center mb-4">
                                         <div class="d-flex align-items-center justify-content-center mb-3"
                                             style="width: 120px; height: 120px; border-radius: 50%; background: <?php echo $circle_color; ?>; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
@@ -152,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                         </div>
                                         <h2 class="fw-bold mb-1 text-center"
                                             style="font-size: 2.4rem; letter-spacing: 1px; color: #222;">
-                                            <?php echo htmlspecialchars($name); ?>
+                                            <?php echo htmlspecialchars($firstname . ' ' . $lastname); ?>
                                         </h2>
                                         <span class="badge <?php echo $badge_class; ?> mb-2"
                                             style="font-size:1.1em; min-width:90px; text-align:center; padding:0.6em 1.2em; border-radius:1em; letter-spacing:1px;">
@@ -191,12 +192,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                                 <?php include '../organizer/org.php'; ?>
                                             </div>
                                         </div>
-                                        <div class="row mb-2 w-100" style="max-width:700px;margin:0 auto;">
+                                        <div class="row mb-4 w-100" style="max-width:700px;margin:0 auto;">
                                             <label class="form-label fw-semibold text-muted">About Me</label>
-                                            <textarea name="about_me" id="aboutMeInput" maxlength="255" class="form-control"
+                                            <textarea name="about_me" id="aboutMeInput" maxlength="500" class="form-control"
                                                 style="width:100%;resize:none;overflow:hidden;text-indent: 50px;" rows="1"
                                                 <?php if (!isset($_GET['edit_about']))
                                                     echo 'readonly'; ?>><?php echo htmlspecialchars($user['about'] ?? ''); ?></textarea>
+                                            <div class="text-end text-muted" id="aboutMeCounter" style="font-size: 0.8rem;">
+                                                0/500</div>
                                         </div>
                                         <div class="d-flex flex-column flex-md-row gap-3 justify-content-center mt-4">
                                             <?php if (!isset($_GET['edit_about'])): ?>
@@ -247,6 +250,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                             if (!aboutMeInput.hasAttribute('readonly')) {
                                                 aboutMeInput.focus();
                                             }
+                                            // Add counter logic
+                                            const aboutMeCounter = document.getElementById('aboutMeCounter');
+                                            aboutMeInput.addEventListener('input', function () {
+                                                aboutMeCounter.textContent = this.value.length + '/500';
+                                            });
+                                            // Initial counter update
+                                            aboutMeCounter.textContent = aboutMeInput.value.length + '/500';
                                         }
                                         // Toggle readonly for contactNoInput based on edit mode
                                         if (contactNoInput) {

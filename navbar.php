@@ -360,7 +360,7 @@
 
     <?php
     // session_start(); // Do NOT call session_start() here. Only in main files before including the navbar.
-    $is_logged_in = isset($_SESSION['username']) && isset($_SESSION['name']) && isset($_SESSION['role']);
+    $is_logged_in = isset($_SESSION['username']) && isset($_SESSION['firstname']) && isset($_SESSION['role']);
     $base_path = '';
     if (strpos($_SERVER['PHP_SELF'], '/admin/') !== false) {
         $base_path = '../';
@@ -368,6 +368,7 @@
     $current_page = $_SERVER['PHP_SELF'];
     $is_admin_dashboard = strpos($current_page, '/admin/dashboard.php') !== false;
     $is_attendee_dashboard = strpos($current_page, '/attendee/dashboard.php') !== false;
+    $is_organizer_dashboard = strpos($current_page, '/organizer/dashboard.php') !== false;
     ?>
 
     <nav class="navbar1 fixed-top" id="navbar">
@@ -406,7 +407,9 @@
                 <?php else: ?>
                     <!-- Logged-in: show name and dropdown -->
                     <div class="dropdown d-inline-block">
-                        <span class="fw-bold" style="color:white;"><?php echo htmlspecialchars($_SESSION['name']); ?></span>
+                        <span class="fw-bold" style="color:white;">
+                            <?php echo isset($_SESSION['firstname']) ? htmlspecialchars($_SESSION['firstname']) : ''; ?>
+                        </span>
                         <i class="fa fa-user dropdown-toggle ms-1" id="userDropdown" data-bs-toggle="dropdown"
                             aria-expanded="false" style="cursor:pointer;"></i>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -414,6 +417,8 @@
                                 <li><a class="dropdown-item" href="/campus_ems/admin/dashboard.php">Dashboard</a></li>
                             <?php elseif ($_SESSION['role'] === 'attendee' && !$is_attendee_dashboard): ?>
                                 <li><a class="dropdown-item" href="/campus_ems/attendee/dashboard.php">Dashboard</a></li>
+                            <?php elseif ($_SESSION['role'] === 'organizer' && !$is_organizer_dashboard): ?>
+                                <li><a class="dropdown-item" href="/campus_ems/organizer/dashboard.php">Dashboard</a></li>
                             <?php endif; ?>
                             <li><a class="dropdown-item" href="/campus_ems/login/logout-user.php">Logout</a></li>
                         </ul>
@@ -451,8 +456,9 @@
                     <?php else: ?>
                         <!-- Logged-in: show name and dropdown -->
                         <div class="dropdown d-inline-block">
-                            <span class="fw-bold"
-                                style="color:white;"><?php echo htmlspecialchars($_SESSION['name']); ?></span>
+                            <span class="fw-bold" style="color:white;">
+                                <?php echo isset($_SESSION['firstname']) ? htmlspecialchars(string: $_SESSION['firstname']) : ''; ?>
+                            </span>
                             <i class="fa fa-user dropdown-toggle ms-1" id="userDropdown" data-bs-toggle="dropdown"
                                 aria-expanded="false" style="cursor:pointer;"></i>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -460,6 +466,8 @@
                                     <li><a class="dropdown-item" href="/campus_ems/admin/dashboard.php">Dashboard</a></li>
                                 <?php elseif ($_SESSION['role'] === 'attendee' && !$is_attendee_dashboard): ?>
                                     <li><a class="dropdown-item" href="/campus_ems/attendee/dashboard.php">Dashboard</a></li>
+                                <?php elseif ($_SESSION['role'] === 'organizer' && !$is_organizer_dashboard): ?>
+                                    <li><a class="dropdown-item" href="/campus_ems/organizer/dashboard.php">Dashboard</a></li>
                                 <?php endif; ?>
                                 <li><a class="dropdown-item" href="/campus_ems/login/logout-user.php">Logout</a></li>
                             </ul>
@@ -488,7 +496,6 @@
                         <li><a href="/campus_ems/home.php" class="nav-link">Home</a></li>
                         <li><a href="/campus_ems/events.php" class="nav-link">Events</a></li>
                         <li><a href="/campus_ems/timeline.php" class="nav-link">timeline</a></li>
-                        <!-- <li><a href="#" class="nav-link">Albums</a></li> -->
                         <li><a href="/campus_ems/about.php" class="nav-link">About</a></li>
                     </ul>
                     <div class="navbar-icons d-flex justify-content-center mb-2">

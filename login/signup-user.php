@@ -53,8 +53,12 @@
                     }
                     ?>
                     <div class="form-group">
-                        <input class="form-control" type="text" name="name" placeholder="Full Name" required
-                            value="<?php echo $name ?>">
+                        <input class="form-control" type="text" name="firstname" placeholder="First Name" required
+                            value="<?php echo isset($firstname) ? $firstname : '' ?>">
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" type="text" name="lastname" placeholder="Last Name" required
+                            value="<?php echo isset($lastname) ? $lastname : '' ?>">
                     </div>
                     <div class="form-group">
                         <input class="form-control" type="text" name="username" placeholder="Username" required
