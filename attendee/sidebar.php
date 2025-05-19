@@ -27,16 +27,8 @@
 <!-- Sidebar -->
 <div class="col-md-4 col-lg-3">
     <div class="sidebar rounded shadow position-sticky" style="font-weight: 500; top: 2rem;">
-        <h5 class="fw-bold mb-3 text-black">
-            <div class="dropdown">
-                <button class="btn shadow border btn-outline-dark dropdown-toggle w-100 text-start fw-bold fs-5"
-                    type="button" id="dashboardDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    Attendee Dashboard
-                </button>
-                <ul class="dropdown-menu w-100" aria-labelledby="dashboardDropdown">
-                    <li><a class="dropdown-item fs-6" href="../organizer/dashboard.php">Organizer Dashboard</a></li>
-                </ul>
-            </div>
+        <h5 class="fw-bold p-2 text-black text-center w-100 border-bottom">
+            Attendee Dashboard
         </h5>
         <div class="d-grid gap-2 p-3 pt-0">
             <a href="dashboard.php"
@@ -48,7 +40,7 @@
                 <i class="fa fa-list me-2"></i> Registrations
             </a>
             <a href="inbox.php"
-                class="d-flex align-items-center text-decoration-none text-black py-2 px-2 rounded hover-shadow<?php echo $current_page == 'inbox.php' ? ' active' : ''; ?>">
+                class="d-flex align-items-center text-decoration-none text-black py-2 px-2 rounded hover-shadow<?php echo in_array($current_page, ['inbox.php', 'create.php', 'view-msg.php']) ? ' active' : ''; ?>">
                 <i class="fa fa-envelope me-2"></i> Inbox
             </a>
             <a href="account.php"

@@ -1,5 +1,11 @@
 <?php
 session_start();
+// Update event statuses: set to 'ended' if past ending_time and not already ended/cancelled
+$con = mysqli_connect('localhost', 'root', '', 'campus_ems');
+$update_status_query = "UPDATE create_events 
+    SET status = 'ended' 
+    WHERE ending_time < NOW() AND status NOT IN ('ended', 'cancelled')";
+mysqli_query($con, $update_status_query);
 ?>
 
 <!DOCTYPE html>
@@ -48,28 +54,11 @@ session_start();
                     </div>
                     <div class="eventlists col-12">
                         <?php
-                        $con = mysqli_connect('localhost', 'root', '', 'campus_ems');
-                        if (!$con) {
-                            die('Database connection failed: ' . mysqli_connect_error());
-                        }
                         $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0;
                         $query = "SELECT r.id AS reg_id, r.registration_date, e.id AS event_id, e.event_title, e.date_time, e.location, e.status
                                 FROM registers r
                                 JOIN create_events e ON r.event_id = e.id
                                 WHERE r.user_id = '$user_id' ORDER BY r.registration_date DESC";
-                        $result = mysqli_query($con, $query);
-
-
-                        // Fetch events
-                        $query = "SELECT *, 
-                            CASE 
-                                WHEN status = 'active' OR status IS NULL THEN 1
-                                WHEN status = 'cancelled' THEN 2
-                                ELSE 3
-                            END AS status_order
-                            FROM create_events 
-                            WHERE user_id = '" . $_SESSION['user_id'] . "' 
-                            ORDER BY status_order ASC, date_time DESC";
                         $result = mysqli_query($con, $query);
                         ?>
 
@@ -80,7 +69,7 @@ session_start();
                                         <thead>
                                             <tr class="text-center align-middle">
                                                 <th>Event Title</th>
-                                                <th>Date & Time</th>
+                                                <th>Start</th>
                                                 <th>Location</th>
                                                 <th>Registration Date</th>
                                                 <th>Status</th>
@@ -98,10 +87,12 @@ session_start();
                                                     $status = '';
                                                     if (isset($row['status']) && $row['status'] === 'cancelled') {
                                                         $status = '<span class="badge bg-danger">Cancelled</span>';
-                                                    } else if (new DateTime() > new DateTime($row['date_time'])) {
+                                                    } else if (isset($row['status']) && $row['status'] === 'ended') {
                                                         $status = '<span class="badge bg-secondary">Ended</span>';
-                                                    } else {
+                                                    } else if (isset($row['status']) && $row['status'] === 'active') {
                                                         $status = '<span class="badge bg-success">Active</span>';
+                                                    } else {
+                                                        $status = '<span class="badge bg-secondary">Unknown</span>';
                                                     }
                                                     ?>
                                                     <tr>

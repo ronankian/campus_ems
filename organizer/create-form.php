@@ -43,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $event_title = mysqli_real_escape_string($con, $_POST['event_title']);
     $event_description = mysqli_real_escape_string($con, $_POST['event_description']);
     $date_time = mysqli_real_escape_string($con, $_POST['date_time']);
+    $ending_time = mysqli_real_escape_string($con, $_POST['ending_time']);
     $location = mysqli_real_escape_string($con, $_POST['location']);
     $category = mysqli_real_escape_string($con, $_POST['category']);
     $contact = mysqli_real_escape_string($con, $_POST['contact']);
@@ -86,9 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         if ($edit_mode) {
             // Update event
-            $query = "UPDATE create_events SET event_title=?, event_description=?, date_time=?, location=?, category=?, contact=?, other_contact=?, related_links=?, attach_file=?, fullname=?, organization=?, user_id=?, updated_at=NOW() WHERE id=?";
+            $query = "UPDATE create_events SET event_title=?, event_description=?, date_time=?, ending_time=?, location=?, category=?, contact=?, other_contact=?, related_links=?, attach_file=?, fullname=?, organization=?, user_id=?, updated_at=NOW() WHERE id=?";
             $stmt = mysqli_prepare($con, $query);
-            mysqli_stmt_bind_param($stmt, 'sssssssssssii', $event_title, $event_description, $date_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $org_name, $user_id, $event_id);
+            mysqli_stmt_bind_param($stmt, 'sssssssssssiii', $event_title, $event_description, $date_time, $ending_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $org_name, $user_id, $event_id);
             if (mysqli_stmt_execute($stmt)) {
                 $success = true;
             } else {
@@ -97,9 +98,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mysqli_stmt_close($stmt);
         } else {
             // Insert event
-            $query = "INSERT INTO create_events (event_title, event_description, date_time, location, category, contact, other_contact, related_links, attach_file, fullname, organization, user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+            $query = "INSERT INTO create_events (event_title, event_description, date_time, ending_time, location, category, contact, other_contact, related_links, attach_file, fullname, organization, user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
             $stmt = mysqli_prepare($con, $query);
-            mysqli_stmt_bind_param($stmt, 'sssssssssssi', $event_title, $event_description, $date_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $org_name, $user_id);
+            mysqli_stmt_bind_param($stmt, 'sssssssssssii', $event_title, $event_description, $date_time, $ending_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $org_name, $user_id);
             if (mysqli_stmt_execute($stmt)) {
                 $success = true;
             } else {
@@ -288,18 +289,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="date_time" class="form-label">Date & Time</label>
+                        <label for="date_time" class="form-label">Opening Time</label>
                         <input type="datetime-local" class="form-control" id="date_time" name="date_time" required
                             value="<?php echo $edit_mode ? htmlspecialchars($event_data['date_time']) : ''; ?>">
                     </div>
                     <div class="col-md-4 mb-3">
+                        <label for="ending_time" class="form-label">Closing Time</label>
+                        <input type="datetime-local" class="form-control" id="ending_time" name="ending_time" required
+                            value="<?php echo $edit_mode ? htmlspecialchars($event_data['ending_time']) : ''; ?>">
+                    </div>
+                    <div class="col-md-2 mb-3">
                         <label for="contact" class="form-label">Contact Number</label>
                         <input type="text" class="form-control" id="contact" name="contact" required
                             value="<?php echo $edit_mode ? htmlspecialchars($event_data['contact']) : ''; ?>"
                             pattern="[0-9]{7,11}" maxlength="11" minlength="7" inputmode="numeric"
                             oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11);">
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-2 mb-3">
                         <label for="other_contact" class="form-label">Other Contact</label>
                         <input type="text" class="form-control" placeholder="Optional" id="other_contact"
                             name="other_contact"
@@ -364,7 +370,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
                 </div>
-                <div class="text-center">
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="terms" name="terms_accepted" value="1" required>
+                    <label class="form-check-label text-black" for="terms">
+                        I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">terms and
+                            conditions</a>.
+                    </label>
+                </div>
+                <div class="text-center mt-3">
                     <button type="submit"
                         class="btn btn-primary"><?php echo $edit_mode ? 'Confirm Changes' : 'Create Event'; ?></button>
                 </div>
@@ -372,6 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     <?php include '../footer.php'; ?>
+    <?php include 'terms.php'; ?>
     <script>
         // Related Links add/remove
         document.addEventListener('DOMContentLoaded', function () {

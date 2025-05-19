@@ -1,16 +1,15 @@
 <?php
 include 'login/connection.php';
-// Update status to 'ended' for events whose ending_time is in the past and not already ended/cancelled
+// Fetch 3 upcoming events with the nearest date_time in the future, status active
 $now = date('Y-m-d H:i:s');
-mysqli_query($con, "UPDATE create_events SET status = 'ended' WHERE ending_time < '$now' AND (status IS NULL OR (status != 'ended' AND status != 'cancelled'))");
-// Fetch 3 most recently ended events (not cancelled, already ended)
-$query = "SELECT * FROM create_events WHERE status = 'ended' ORDER BY ending_time DESC LIMIT 3";
+// Fetch at least 3 ongoing events: current time is between date_time and ending_time (inclusive), status is active or null
+$query = "SELECT * FROM create_events WHERE (status = 'active' OR status IS NULL) AND date_time <= '$now' AND ending_time >= '$now' ORDER BY date_time ASC LIMIT 3";
 $result = mysqli_query($con, $query);
 ?>
 <?php if (mysqli_num_rows($result) > 0): ?>
     <div class="col-md-12">
         <div>
-            <div class="sidebar-recent-heading border-bottom-0 pt-2 mb-1">Recent Events</div>
+            <div class="sidebar-recent-heading border-bottom-0 pt-2 mb-1">Ongoing Events</div>
             <ul class="list-unstyled">
                 <?php while ($row = mysqli_fetch_assoc($result)): ?>
                     <li>
@@ -45,7 +44,7 @@ $result = mysqli_query($con, $query);
                             <div class="flex-grow-1">
                                 <h6 class="mb-2 text-white"><?php echo htmlspecialchars($row['event_title']); ?></h6>
                                 <small class="text-white-50">
-                                    <?php echo date('F d, Y | h:i A', strtotime($row['ending_time'])); ?>
+                                    Ends: <?php echo date('F d, Y | h:i A', strtotime($row['ending_time'])); ?>
                                 </small>
                             </div>
                         </a>
@@ -61,73 +60,5 @@ $result = mysqli_query($con, $query);
         font-weight: 700;
         font-style: italic;
         color: #fff;
-    }
-
-    .sidebar-recent-row {
-        border-bottom: 1px solid #444;
-        transition: background 0.15s;
-        padding-left: 0;
-        padding-right: 0;
-    }
-
-    .sidebar-recent-row:last-child {
-        border-bottom: none;
-    }
-
-    .sidebar-recent-thumb {
-        width: 56px;
-        min-width: 56px;
-        height: 56px;
-        border-radius: 4px;
-        overflow: hidden;
-        background: #222;
-    }
-
-    .sidebar-recent-thumb img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 4px;
-    }
-
-    .sidebar-recent-noimg {
-        width: 100%;
-        height: 56px;
-        background: #888;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-size: 0.9rem;
-        opacity: 0.7;
-        text-align: center;
-        flex-direction: column;
-        line-height: 1.1;
-    }
-
-    .sidebar-recent-details {
-        min-width: 0;
-        flex: 1 1 0%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .sidebar-recent-title-ev {
-        color: #fff;
-        font-size: 1rem;
-        font-weight: 700;
-        line-height: 1.2;
-        white-space: normal;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .sidebar-recent-date {
-        color: #bdbdbd;
-        font-size: 0.95rem;
-        font-weight: 400;
-        margin-top: 2px;
     }
 </style>

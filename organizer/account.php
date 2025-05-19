@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EventHub Attendee Dashboard</title>
+    <title>Organizer Attendee Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                             if ($role === 'admin')
                                 $badge_class = 'bg-danger';
                             else if ($role === 'organizer')
-                                $badge_class = 'bg-primary';
+                                $badge_class = 'bg-warning';
                             else if ($role === 'attendee')
                                 $badge_class = 'bg-success';
                             // Before including org.php, set a variable for the selected value
@@ -213,9 +213,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                                 <a href="../login/forgot-password.php"
                                                     class="btn btn-outline-primary px-4 py-2 fw-semibold rounded-pill">Change
                                                     Password</a>
-                                                <a href="create.php?request_organizer=1"
-                                                    class="btn btn-outline-warning px-4 py-2 fw-semibold rounded-pill">Request
-                                                    Organizer</a>
                                             <?php endif; ?>
                                         </div>
                                     </form>

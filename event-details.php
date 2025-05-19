@@ -79,6 +79,9 @@ session_start();
                     $reg_id = $reg_row['id'];
                 }
             }
+            // Auto-update status to 'ended' if needed
+            $now = date('Y-m-d H:i:s');
+            mysqli_query($con, "UPDATE create_events SET status = 'ended' WHERE ending_time < '$now' AND (status IS NULL OR (status != 'ended' AND status != 'cancelled'))");
             ?>
             <div class="col-md-8 mx-auto">
                 <?php if ($event): ?>
@@ -134,7 +137,7 @@ session_start();
                                 $status = $event['status'] ?? 'active';
                                 if ($status === 'cancelled') {
                                     echo '<span class="badge bg-danger">Cancelled</span>';
-                                } else if (new DateTime() > new DateTime($event['date_time'])) {
+                                } else if ($status === 'ended') {
                                     echo '<span class="badge bg-secondary">Ended</span>';
                                 } else {
                                     echo '<span class="badge bg-success">Active</span>';
@@ -144,23 +147,34 @@ session_start();
                         </div>
                         <div class="row mb-2">
                             <div class="col-6 text-white">
-                                <div><small>Date & Time</small><br>
+                                <div><small>Event Starts at</small><br>
                                     <span>
                                         <?php
                                         if ($status === 'cancelled' && !empty($event['date_cancelled'])) {
-                                            echo '<span class="fw-semibold fs-4">' . date('F d, Y \| h:i A', strtotime($event['date_cancelled'])) . '</span>';
+                                            echo '<span class="fw-semibold">' . date('F d, Y \| h:i A', strtotime($event['date_cancelled'])) . '</span>';
                                         } else {
-                                            echo '<span class="fw-semibold fs-4">' . date('F d, Y \| h:i A', strtotime($event['date_time'])) . '</span>';
+                                            echo '<span class="fw-semibold">' . date('F d, Y \| h:i A', strtotime($event['date_time'])) . '</span>';
                                         }
                                         ?>
                                     </span>
                                 </div>
-                                <div class="mt-2">
-                                    <small>Location</small><br><span
-                                        class="fw-semibold fs-4"><?php echo htmlspecialchars($event['location'] ?? ''); ?></span>
+                                <div class="mt-2"><small>Event Ends at</small><br>
+                                    <span>
+                                        <?php
+                                        if (!empty($event['ending_time'])) {
+                                            echo '<span class="fw-semibold">' . date('F d, Y \| h:i A', strtotime($event['ending_time'])) . '</span>';
+                                        } else {
+                                            echo '<span class="fw-semibold text-muted">N/A</span>';
+                                        }
+                                        ?>
+                                    </span>
                                 </div>
                             </div>
                             <div class="col-6 text-end text-white">
+                                <div class="mb-2">
+                                    <small>Location</small><br><span
+                                        class="fw-semibold"><?php echo htmlspecialchars($event['location'] ?? ''); ?></span>
+                                </div>
                                 <div>
                                     <small>Contacts</small>
                                     <?php
@@ -169,7 +183,7 @@ session_start();
                                         foreach ($contacts as $contact) {
                                             $contact = trim($contact);
                                             if ($contact) {
-                                                echo '<div class="fw-semibold fs-4">' . htmlspecialchars($contact) . '</div>';
+                                                echo '<div class="fw-semibold">' . htmlspecialchars($contact) . '</div>';
                                             }
                                         }
                                     }
@@ -178,7 +192,7 @@ session_start();
                                         foreach ($other_contacts as $other) {
                                             $other = trim($other);
                                             if ($other) {
-                                                echo '<div class="fw-semibold fs-4>' . htmlspecialchars($other) . '</div>';
+                                                echo '<div class="fw-semibold>' . htmlspecialchars($other) . '</div>';
                                             }
                                         }
                                     }
@@ -202,12 +216,16 @@ session_start();
                             <div class="mb-2"
                                 style="padding:4px 8px; border-radius:3px; background: transparent; color: #fff;">
                                 <?php
-                                $orgs = [];
-                                if (!empty($event['organizer_name'])) {
-                                    $orgs[] = htmlspecialchars($event['organizer_name']) .
-                                        (isset($event['organizer_org']) && $event['organizer_org'] ? ' (' . htmlspecialchars($event['organizer_org']) . ')' : '');
+                                $organizer_name = $event['fullname'] ?? '';
+                                $organizer_org = $event['organization'] ?? '';
+                                if ($organizer_name) {
+                                    echo htmlspecialchars($organizer_name);
+                                    if ($organizer_org) {
+                                        echo ' (' . htmlspecialchars($organizer_org) . ')';
+                                    }
+                                } else {
+                                    echo '<span class="text-muted">N/A</span>';
                                 }
-                                echo implode(', ', $orgs);
                                 ?>
                             </div>
                         </div>
@@ -251,35 +269,56 @@ session_start();
             <div class="col-md-4 mb-4 ps-5">
                 <div class="position-sticky" style="top: 50px;">
                     <?php
-                    $status = $event['status'] ?? 'active';
-                    if ($status === 'cancelled' || new DateTime() > new DateTime($event['date_time'])) {
+                    if ($status === 'cancelled' || $status === 'ended') {
                         echo '<a href="events.php" class="btn btn-primary btn-lg mt-2" style="font-weight: bold; letter-spacing: 1px; width: 100%;">
                             <i class="fa fa-calendar-days me-2"></i> Other Events
                         </a>';
                     } else {
-                        if (isset($_SESSION['role']) && !empty($_SESSION['role'])) {
-                            if ($already_registered && $reg_id) {
-                                $register_link = 'attendee/view.php?reg_id=' . $reg_id;
-                            } else {
-                                $register_link = 'attendee/reg-form.php?event_title=' . urlencode($event['event_title']);
-                            }
-                        } else {
-                            $register_link = 'login/login-user.php';
+                        $show_register_btn = true;
+                        if (isset($_SESSION['role']) && $_SESSION['role'] === 'organizer' && isset($_SESSION['user_id']) && isset($event['user_id']) && $_SESSION['user_id'] == $event['user_id']) {
+                            $show_register_btn = false;
                         }
-                        echo '<a href="' . $register_link . '" class="btn btn-outline-success btn-lg mt-2 w-100" style="font-weight: bold; letter-spacing: 1px;">
-                            <i class="fa fa-plus me-2"></i> Register
-                        </a>';
+                        if ($show_register_btn) {
+                            if (isset($_SESSION['role']) && !empty($_SESSION['role'])) {
+                                if ($already_registered && $reg_id) {
+                                    $register_link = 'attendee/view.php?reg_id=' . $reg_id;
+                                } else {
+                                    $register_link = 'attendee/reg-form.php?event_title=' . urlencode($event['event_title']);
+                                }
+                            } else {
+                                $register_link = 'login/login-user.php';
+                            }
+                            echo '<a href="' . $register_link . '" class="btn btn-outline-success btn-lg mt-2 w-100" style="font-weight: bold; letter-spacing: 1px;">
+                                <i class="fa fa-plus me-2"></i> Register
+                            </a>';
+                        }
                     }
-                    if (isset($_SESSION['role']) && $_SESSION['role'] === 'attendee') {
-                        echo '<a href="attendee/create.php?event_id=' . $event['id'] . '" class="btn btn-outline-danger btn-lg mt-4 w-100" style="font-weight: bold; letter-spacing: 1px;">
-                            <i class="fa fa-flag me-2"></i> Report
-                        </a>';
-                    } elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'organizer') {
-                        echo '<a href="organizer/edit-form.php?id=' . $event['id'] . '" class="btn btn-outline-warning btn-lg mt-4 w-100" style="font-weight: bold; letter-spacing: 1px;">
-                            <i class="fa fa-edit me-2"></i> Edit
-                        </a>';
+                    if (isset($_SESSION['role'])) {
+                        if ($_SESSION['role'] === 'attendee') {
+                            if ($status !== 'cancelled' && $status !== 'ended') {
+                                echo '<a href="attendee/create.php?event_id=' . $event['id'] . '&event_title=' . urlencode($event['event_title']) . '" class="btn btn-outline-danger btn-lg mt-4 w-100" style="font-weight: bold; letter-spacing: 1px;">
+                                    <i class="fa fa-flag me-2"></i> Report
+                                </a>';
+                            }
+                        } elseif ($_SESSION['role'] === 'organizer') {
+                            if ($status !== 'cancelled' && $status !== 'ended') {
+                                if (isset($event['user_id']) && $_SESSION['user_id'] == $event['user_id']) {
+                                    echo '<a href="organizer/edit-form.php?id=' . $event['id'] . '" class="btn btn-outline-warning btn-lg mt-4 w-100" style="font-weight: bold; letter-spacing: 1px;">
+                                        <i class="fa fa-edit me-2"></i> Edit
+                                    </a>';
+                                }
+                            }
+                            if (isset($event['user_id']) && $_SESSION['user_id'] != $event['user_id'] && $status !== 'cancelled' && $status !== 'ended') {
+                                echo '<a href="attendee/create.php?event_id=' . $event['id'] . '&event_title=' . urlencode($event['event_title']) . '" class="btn btn-outline-danger btn-lg mt-4 w-100" style="font-weight: bold; letter-spacing: 1px;">
+                                    <i class="fa fa-flag me-2"></i> Report
+                                </a>';
+                            }
+                        }
                     }
                     ?>
+                    <div class="sidebar-ongoing-events w-100 mt-4">
+                        <?php include 'ongoing.php'; ?>
+                    </div>
                     <div class="sidebar-upcoming-events w-100 mt-4">
                         <?php include 'upcoming.php'; ?>
                     </div>

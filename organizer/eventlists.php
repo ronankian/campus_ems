@@ -77,6 +77,10 @@ session_start();
                             $alter_table = "ALTER TABLE create_events ADD COLUMN status VARCHAR(20) DEFAULT 'active'";
                             mysqli_query($con, $alter_table);
                         }
+
+                        // Auto-update status to 'ended' for events whose ending_time is in the past and not already ended/cancelled
+                        $now = date('Y-m-d H:i:s');
+                        mysqli_query($con, "UPDATE create_events SET status = 'ended' WHERE ending_time < '$now' AND (status IS NULL OR (status != 'ended' AND status != 'cancelled'))");
                         ?>
 
                         <div class="card shadow rounded-4 border-0">
@@ -86,9 +90,9 @@ session_start();
                                         <thead>
                                             <tr class="text-center align-middle">
                                                 <th>Event Title</th>
-                                                <th>Date & Time</th>
+                                                <th>Start</th>
+                                                <th>End</th>
                                                 <th>Location</th>
-                                                <th>Organizer</th>
                                                 <th>Status</th>
                                                 <th>Actions</th>
                                             </tr>
@@ -105,25 +109,38 @@ session_start();
                                                     $current_date = new DateTime();
                                                     $event_date = new DateTime($row['date_time']);
 
-                                                    // Determine status
+                                                    // Count registrants for this event
+                                                    $count_query = "SELECT COUNT(*) as registrant_count FROM registers WHERE event_id = '" . $row['id'] . "'";
+                                                    $count_result = mysqli_query($con, $count_query);
+                                                    $registrant_count = mysqli_fetch_assoc($count_result)['registrant_count'];
+
+                                                    // Determine status from the status column
                                                     $status = '';
                                                     if (isset($row['status']) && $row['status'] === 'cancelled') {
                                                         $status = '<span class="badge bg-danger">Cancelled</span>';
-                                                    } else if ($current_date > $event_date) {
+                                                    } else if (isset($row['status']) && $row['status'] === 'ended') {
                                                         $status = '<span class="badge bg-secondary">Ended</span>';
                                                     } else {
                                                         $status = '<span class="badge bg-success">Active</span>';
                                                     }
 
-                                                    // Combine organizer and co-organizers
+                                                    // Organizer
                                                     $organizers = $row['fullname'];
                                                     ?>
                                                     <tr>
                                                         <td><?php echo htmlspecialchars($row['event_title']); ?></td>
                                                         <td><?php echo date('M d, Y | h:i A', strtotime($row['date_time'])); ?>
                                                         </td>
+                                                        <td>
+                                                            <?php
+                                                            if (isset($row['status']) && $row['status'] === 'cancelled' && !empty($row['date_cancelled'])) {
+                                                                echo '<span class="text-danger">Cancelled: ' . date('M d, Y | h:i A', strtotime($row['date_cancelled'])) . '</span>';
+                                                            } else {
+                                                                echo !empty($row['ending_time']) ? date('M d, Y | h:i A', strtotime($row['ending_time'])) : '<span class="text-muted">N/A</span>';
+                                                            }
+                                                            ?>
+                                                        </td>
                                                         <td><?php echo htmlspecialchars($row['location']); ?></td>
-                                                        <td><?php echo htmlspecialchars($organizers); ?></td>
                                                         <td><?php echo $status; ?></td>
                                                         <td>
                                                             <div class="dropdown">
@@ -137,12 +154,10 @@ session_start();
                                                                     <li><a class="dropdown-item"
                                                                             href="/campus_ems/event-details.php?id=<?php echo $row['id']; ?>">View
                                                                             Details</a></li>
-                                                                    <?php if ((!isset($row['status']) || $row['status'] !== 'cancelled') && (new DateTime() <= new DateTime($row['date_time']))): ?>
+                                                                    <?php if (isset($row['status']) && $row['status'] === 'active'): ?>
                                                                         <li><a class="dropdown-item"
                                                                                 href="edit-form.php?id=<?php echo $row['id']; ?>">Edit</a>
                                                                         </li>
-                                                                    <?php endif; ?>
-                                                                    <?php if ((!isset($row['status']) || $row['status'] !== 'cancelled') && (new DateTime() <= new DateTime($row['date_time']))): ?>
                                                                         <li><a class="dropdown-item" href="javascript:void(0)"
                                                                                 onclick="confirmCancel(<?php echo $row['id']; ?>)">Cancel
                                                                                 Event</a></li>

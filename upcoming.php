@@ -5,15 +5,11 @@ $now = date('Y-m-d H:i:s');
 $query = "SELECT * FROM create_events WHERE (status = 'active' OR status IS NULL) AND date_time > '$now' ORDER BY date_time ASC LIMIT 3";
 $result = mysqli_query($con, $query);
 ?>
-<div class="col-md-12">
-    <div>
-        <div class="sidebar-recent-heading border-bottom-0 pt-2 mb-1">Upcoming Events</div>
-        <ul class="list-unstyled">
-            <?php if (mysqli_num_rows($result) === 0): ?>
-                <li>
-                    <div class="text-muted text-center py-4">No upcoming events found.</div>
-                </li>
-            <?php else: ?>
+<?php if (mysqli_num_rows($result) > 0): ?>
+    <div class="col-md-12">
+        <div>
+            <div class="sidebar-recent-heading border-bottom-0 pt-2 mb-1">Upcoming Events</div>
+            <ul class="list-unstyled">
                 <?php while ($row = mysqli_fetch_assoc($result)): ?>
                     <li>
                         <a class="d-flex flex-row gap-3 align-items-center py-3 link-body-emphasis text-decoration-none border-top"
@@ -47,15 +43,15 @@ $result = mysqli_query($con, $query);
                             <div class="flex-grow-1">
                                 <h6 class="mb-2 text-white"><?php echo htmlspecialchars($row['event_title']); ?></h6>
                                 <small
-                                    class="text-white-50"><?php echo date('F d, Y \| h:i A', strtotime($row['date_time'])); ?></small>
+                                    class="text-white-50"><?php echo date('F d, Y | h:i A', strtotime($row['date_time'])); ?></small>
                             </div>
                         </a>
                     </li>
                 <?php endwhile; ?>
-            <?php endif; ?>
-        </ul>
+            </ul>
+        </div>
     </div>
-</div>
+<?php endif; ?>
 <style>
     .sidebar-recent-heading {
         font-size: 1.25rem;

@@ -48,7 +48,7 @@ session_start();
 
                     <!-- Welcome -->
                     <div class="col-12">
-                        <h4 class="fw-bold mb-3">Attedee Overview</h4>
+                        <h4 class="fw-bold mb-3">Dashboard Overview</h4>
                     </div>
 
                     <!-- Counts -->
