@@ -82,13 +82,32 @@ session_start();
             // Auto-update status to 'ended' if needed
             $now = date('Y-m-d H:i:s');
             mysqli_query($con, "UPDATE create_events SET status = 'ended' WHERE ending_time < '$now' AND (status IS NULL OR (status != 'ended' AND status != 'cancelled'))");
+            // Fetch organizer's organization from usertable
+            $organizer_org = '';
+            if (!empty($event['user_id'])) {
+                $org_result = mysqli_query($con, "SELECT organization FROM usertable WHERE id = '" . $event['user_id'] . "' LIMIT 1");
+                if ($org_result && mysqli_num_rows($org_result) > 0) {
+                    $org_row = mysqli_fetch_assoc($org_result);
+                    $organizer_org = $org_row['organization'] ?? '';
+                }
+            }
+            // Fetch user role if logged in
+            $user_role = null;
+            if (isset($_SESSION['user_id'])) {
+                $uid = $_SESSION['user_id'];
+                $role_result = mysqli_query($con, "SELECT role FROM usertable WHERE id = '$uid' LIMIT 1");
+                if ($role_result && mysqli_num_rows($role_result) > 0) {
+                    $role_row = mysqli_fetch_assoc($role_result);
+                    $user_role = $role_row['role'];
+                }
+            }
             ?>
             <div class="col-md-8 mx-auto">
                 <?php if ($event): ?>
                     <div class="card p-3" style="border:1px solid #444; background: transparent;">
                         <!-- Image -->
                         <div class="mb-1"
-                            style="width:100%; height:200px; background:#888; border-radius:4px; overflow:hidden; display:flex; align-items:center; justify-content:center; position:relative;">
+                            style="width:100%; height:250px; background:#888; border-radius:4px; overflow:hidden; display:flex; align-items:center; justify-content:center; position:relative;">
                             <?php
                             $img = null;
                             if (!empty($event['attach_file'])) {
@@ -217,7 +236,6 @@ session_start();
                                 style="padding:4px 8px; border-radius:3px; background: transparent; color: #fff;">
                                 <?php
                                 $organizer_name = $event['fullname'] ?? '';
-                                $organizer_org = $event['organization'] ?? '';
                                 if ($organizer_name) {
                                     echo htmlspecialchars($organizer_name);
                                     if ($organizer_org) {
@@ -279,18 +297,21 @@ session_start();
                             $show_register_btn = false;
                         }
                         if ($show_register_btn) {
-                            if (isset($_SESSION['role']) && !empty($_SESSION['role'])) {
-                                if ($already_registered && $reg_id) {
-                                    $register_link = 'attendee/view.php?reg_id=' . $reg_id;
+                            // Hide register button if user is banned
+                            if ($user_role !== 'banned') {
+                                if (isset($_SESSION['role']) && !empty($_SESSION['role'])) {
+                                    if ($already_registered && $reg_id) {
+                                        $register_link = 'attendee/view.php?reg_id=' . $reg_id;
+                                    } else {
+                                        $register_link = 'attendee/reg-form.php?event_title=' . urlencode($event['event_title']);
+                                    }
                                 } else {
-                                    $register_link = 'attendee/reg-form.php?event_title=' . urlencode($event['event_title']);
+                                    $register_link = 'login/login-user.php';
                                 }
-                            } else {
-                                $register_link = 'login/login-user.php';
+                                echo '<a href="' . $register_link . '" class="btn btn-outline-success btn-lg mt-2 w-100" style="font-weight: bold; letter-spacing: 1px;">
+                                    <i class="fa fa-plus me-2"></i> Register
+                                </a>';
                             }
-                            echo '<a href="' . $register_link . '" class="btn btn-outline-success btn-lg mt-2 w-100" style="font-weight: bold; letter-spacing: 1px;">
-                                <i class="fa fa-plus me-2"></i> Register
-                            </a>';
                         }
                     }
                     if (isset($_SESSION['role'])) {

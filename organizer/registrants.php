@@ -43,19 +43,47 @@ if ($count_query && $count_row = mysqli_fetch_assoc($count_query)) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <style>
+        :root {
+            --primary: #784ba0;
+            --gradient-start: #ff3cac;
+            --gradient-end: #38f9d7;
+            --surface-dark: #2b2d42;
+            --accent: #ffb347;
+            --text-main: #f0f0f0;
+            --text-dark: #2b2d42;
+        }
+
         .dashboard-container {
             border-radius: 6px;
             backdrop-filter: blur(8px);
         }
 
-        .card-summary {
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        .card,
+        .table {
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
         }
 
-        .card-summary .icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+        .table th,
+        .table td {
+            background: transparent !important;
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .table thead th {
+            background: rgba(0, 0, 0, 0.2) !important;
+            color: #fff !important;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .table-hover tbody tr:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .table-bordered {
+            border-color: rgba(255, 255, 255, 0.2) !important;
         }
     </style>
 
@@ -82,7 +110,7 @@ if ($count_query && $count_row = mysqli_fetch_assoc($count_query)) {
                     <div class="eventlists col-12">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <a href="export_registrants.php<?php echo $selected_event_id > 0 ? '?event_id=' . $selected_event_id : ''; ?>"
-                                class="btn btn-outline-success px-4 fw-semibold"><i
+                                class="btn btn-outline-info px-4 fw-semibold"><i
                                     class="fa fa-download me-2"></i>Export</a>
                             <div class="d-flex align-items-center gap-2">
                                 <form method="get" class="d-flex align-items-center gap-2">
@@ -99,7 +127,7 @@ if ($count_query && $count_row = mysqli_fetch_assoc($count_query)) {
                                         <?php endforeach; ?>
                                     </select>
                                 </form>
-                                <span class="badge bg-success fs-6 px-3 py-2">Registrants:
+                                <span class="badge bg-info fs-6 px-3 py-2">Registrants:
                                     <?php echo $registrant_count; ?></span>
                             </div>
                         </div>
@@ -110,7 +138,7 @@ if ($count_query && $count_row = mysqli_fetch_assoc($count_query)) {
                                         <thead>
                                             <tr class="text-center align-middle">
                                                 <th>Full Name</th>
-                                                <th>Student Number</th>
+                                                <th>Student No.</th>
                                                 <th>Year Level</th>
                                                 <th>Section</th>
                                                 <th>Email Address</th>
@@ -125,14 +153,14 @@ if ($count_query && $count_row = mysqli_fetch_assoc($count_query)) {
                                                 </tr>
                                             <?php else: ?>
                                                 <?php foreach ($registrants as $row): ?>
-                                                    <tr>
+                                                    <tr class="text-center align-middle">
                                                         <td><?php echo htmlspecialchars($row['firstname'] . ' ' . $row['lastname']); ?>
                                                         </td>
                                                         <td><?php echo htmlspecialchars($row['student_number']); ?></td>
                                                         <td><?php echo htmlspecialchars($row['year_level']); ?></td>
                                                         <td><?php echo htmlspecialchars($row['section']); ?></td>
                                                         <td><?php echo htmlspecialchars($row['email']); ?></td>
-                                                        <td><a href="report_registrant.php?reg_id=<?php echo $row['id']; ?>"
+                                                        <td><a href="create.php?reportuser_id=<?php echo $row['user_id']; ?>"
                                                                 class="btn btn-sm btn-outline-danger">Report</a></td>
                                                     </tr>
                                                 <?php endforeach; ?>

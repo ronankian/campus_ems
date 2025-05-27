@@ -33,37 +33,32 @@ if (!$registration) {
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     <style>
-        body {
-            background: #f5f6fa;
-        }
-
-        .card-summary {
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-
-        .card-summary .icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
         .form-container {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
+            border: none !important;
         }
 
         .form-title {
             text-align: center;
             margin-bottom: 30px;
-            color: #333;
+            color: #fff;
         }
 
         label.form-label {
-            color: black !important;
+            color: #fff !important;
+        }
+
+        .btn-secondary {
+            background: var(--surface-dark) !important;
+            color: #fff !important;
+            border: none !important;
         }
     </style>
 
@@ -129,7 +124,7 @@ if (!$registration) {
                 </div>
                 <div class="mb-3 form-check">
                     <input type="checkbox" class="form-check-input" id="terms" name="terms" <?php echo ($registration['terms_accepted'] ? 'checked' : ''); ?> disabled>
-                    <label class="form-check-label text-black" for="terms">I agree to the terms and conditions</label>
+                    <label class="form-check-label text-white" for="terms">I agree to the terms and conditions</label>
                 </div>
                 <div class="text-center mt-4">
                     <a href="eventlists.php" class="btn btn-secondary">Go Back</a>

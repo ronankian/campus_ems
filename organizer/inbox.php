@@ -8,24 +8,52 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EventHub Attendee Dashboard</title>
+    <title>EventHub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 
     <style>
+        :root {
+            --primary: #784ba0;
+            --gradient-start: #ff3cac;
+            --gradient-end: #38f9d7;
+            --surface-dark: #2b2d42;
+            --accent: #ffb347;
+            --text-main: #f0f0f0;
+            --text-dark: #2b2d42;
+        }
+
         .dashboard-container {
             border-radius: 6px;
             backdrop-filter: blur(8px);
         }
 
-        .card-summary {
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        .card,
+        .table {
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
         }
 
-        .card-summary .icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+        .table th,
+        .table td {
+            background: transparent !important;
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .table thead th {
+            background: rgba(0, 0, 0, 0.2) !important;
+            color: #fff !important;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .table-hover tbody tr:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .table-bordered {
+            border-color: rgba(255, 255, 255, 0.2) !important;
         }
     </style>
 
@@ -41,13 +69,11 @@ session_start();
         <div class="row dashboard-container p-3 py-4">
             <?php include 'sidebar.php'; ?>
 
-            <div class="col-md-9 ps-4">
+            <div class="col-md-9">
                 <div class="row align-items-center">
-                    <div class="col-6">
-                        <h4 class="fw-bold mb-3">My Message Inbox</h4>
-                    </div>
-                    <div class="col-6 text-end mb-3 pe-4">
-                        <a href="create.php" class="text-decoration-none fs-4 fw-bold text-white">
+                    <div class="col-12 d-flex justify-content-between">
+                        <h4 class="fw-bold mb-3"> My Message Inbox</h4>
+                        <a href="create.php" class="text-decoration-none me-2 fs-4 fw-bold text-white">
                             <i class="fa fa-plus"></i> Create
                         </a>
                     </div>
@@ -109,7 +135,7 @@ session_start();
                                                             break;
                                                     }
                                                     ?>
-                                                    <tr>
+                                                    <tr class="text-center align-middle">
                                                         <td><?php echo htmlspecialchars($row['title']); ?></td>
                                                         <td><?php echo htmlspecialchars($subject); ?></td>
                                                         <td><?php echo date('M d, Y | h:i A', strtotime($row['created_at'])); ?>
@@ -122,7 +148,8 @@ session_start();
                                                         <td><?php echo $status; ?></td>
                                                         <td class="text-center align-middle">
                                                             <a href="view-msg.php?id=<?php echo $row['id']; ?>"
-                                                                class="text-decoration-none">View</a>
+                                                                class="btn btn-sm btn-primary" title="View Message"><i
+                                                                    class="fa fa-eye"></i></a>
                                                         </td>
                                                     </tr>
                                                 <?php endwhile; ?>

@@ -12,19 +12,52 @@ session_start();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <style>
+        :root {
+            --primary: #784ba0;
+            --gradient-start: #ff3cac;
+            --gradient-end: #38f9d7;
+            --surface-dark: #2b2d42;
+            --accent: #ffb347;
+            --text-main: #f0f0f0;
+            --text-dark: #2b2d42;
+        }
+
         .dashboard-container {
             border-radius: 6px;
             backdrop-filter: blur(8px);
         }
 
-        .card-summary {
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        .card,
+        .table {
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
         }
 
-        .card-summary .icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+        .modal-content {
+            background: rgba(43, 45, 66, 0.7) !important;
+            backdrop-filter: blur(10px) !important;
+        }
+
+        .table th,
+        .table td {
+            background: transparent !important;
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .table thead th {
+            background: rgba(0, 0, 0, 0.2) !important;
+            color: #fff !important;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .table-hover tbody tr:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .table-bordered {
+            border-color: rgba(255, 255, 255, 0.2) !important;
         }
     </style>
 
@@ -40,12 +73,15 @@ session_start();
         <div class="row dashboard-container p-3 py-4">
             <?php include 'sidebar.php'; ?>
 
-            <div class="col-md-9 ps-4">
+            <div class="col-md-9">
                 <div class="row">
 
                     <!-- Section Title -->
-                    <div class="col-12">
+                    <div class="col-12 d-flex justify-content-between">
                         <h4 class="fw-bold mb-3"> Event Management</h4>
+                        <a href="create-form.php" class="text-decoration-none me-2 fs-4 fw-bold text-white">
+                            <i class="fa fa-plus"></i> Create
+                        </a>
                     </div>
 
                     <div class="eventlists col-12">
@@ -89,9 +125,9 @@ session_start();
                                     <table class="table table-hover table-bordered">
                                         <thead>
                                             <tr class="text-center align-middle">
+                                                <th>Category</th>
                                                 <th>Event Title</th>
-                                                <th>Start</th>
-                                                <th>End</th>
+                                                <th>Schedule</th>
                                                 <th>Location</th>
                                                 <th>Status</th>
                                                 <th>Actions</th>
@@ -105,65 +141,58 @@ session_start();
                                                 </tr>
                                             <?php else: ?>
                                                 <?php while ($row = mysqli_fetch_assoc($result)):
-                                                    // Get current date and event date
-                                                    $current_date = new DateTime();
-                                                    $event_date = new DateTime($row['date_time']);
-
                                                     // Count registrants for this event
                                                     $count_query = "SELECT COUNT(*) as registrant_count FROM registers WHERE event_id = '" . $row['id'] . "'";
                                                     $count_result = mysqli_query($con, $count_query);
                                                     $registrant_count = mysqli_fetch_assoc($count_result)['registrant_count'];
 
-                                                    // Determine status from the status column
-                                                    $status = '';
+                                                    // Status badge and time
+                                                    $status_badge = '';
+                                                    $status_time = '';
+                                                    $status_time_label = '';
                                                     if (isset($row['status']) && $row['status'] === 'cancelled') {
-                                                        $status = '<span class="badge bg-danger">Cancelled</span>';
-                                                    } else if (isset($row['status']) && $row['status'] === 'ended') {
-                                                        $status = '<span class="badge bg-secondary">Ended</span>';
+                                                        $status_badge = '<span class="badge bg-danger">Cancelled</span>';
+                                                        $status_time = !empty($row['date_cancelled']) ? date('M d, Y | h:i A', strtotime($row['date_cancelled'])) : '';
+                                                        $status_time_label = 'Cancelled at';
+                                                    } elseif (isset($row['status']) && $row['status'] === 'ended') {
+                                                        $status_badge = '<span class="badge bg-secondary">Ended</span>';
+                                                        $status_time = !empty($row['updated_at']) && $row['updated_at'] !== $row['created_at'] ? date('M d, Y | h:i A', strtotime($row['updated_at'])) : date('M d, Y | h:i A', strtotime($row['created_at']));
+                                                        $status_time_label = (!empty($row['updated_at']) && $row['updated_at'] !== $row['created_at']) ? 'Updated at' : 'Created at';
                                                     } else {
-                                                        $status = '<span class="badge bg-success">Active</span>';
+                                                        $status_badge = '<span class="badge bg-success">Active</span>';
+                                                        $status_time = !empty($row['updated_at']) && $row['updated_at'] !== $row['created_at'] ? date('M d, Y | h:i A', strtotime($row['updated_at'])) : date('M d, Y | h:i A', strtotime($row['created_at']));
+                                                        $status_time_label = (!empty($row['updated_at']) && $row['updated_at'] !== $row['created_at']) ? 'Updated at' : 'Created at';
                                                     }
-
-                                                    // Organizer
-                                                    $organizers = $row['fullname'];
                                                     ?>
-                                                    <tr>
+                                                    <tr class="text-center align-middle">
+                                                        <td><?php echo htmlspecialchars($row['category'] ?? ''); ?></td>
                                                         <td><?php echo htmlspecialchars($row['event_title']); ?></td>
-                                                        <td><?php echo date('M d, Y | h:i A', strtotime($row['date_time'])); ?>
-                                                        </td>
                                                         <td>
                                                             <?php
-                                                            if (isset($row['status']) && $row['status'] === 'cancelled' && !empty($row['date_cancelled'])) {
-                                                                echo '<span class="text-danger">Cancelled: ' . date('M d, Y | h:i A', strtotime($row['date_cancelled'])) . '</span>';
-                                                            } else {
-                                                                echo !empty($row['ending_time']) ? date('M d, Y | h:i A', strtotime($row['ending_time'])) : '<span class="text-muted">N/A</span>';
-                                                            }
+                                                            $start = !empty($row['date_time']) ? date('M d, Y | h:i A', strtotime($row['date_time'])) : '<span class=\'text-muted\'>N/A</span>';
+                                                            $end = !empty($row['ending_time']) ? date('M d, Y | h:i A', strtotime($row['ending_time'])) : '<span class=\'text-muted\'>N/A</span>';
+                                                            echo $start . ' - ' . $end;
                                                             ?>
                                                         </td>
                                                         <td><?php echo htmlspecialchars($row['location']); ?></td>
-                                                        <td><?php echo $status; ?></td>
                                                         <td>
-                                                            <div class="dropdown">
-                                                                <button class="btn btn-sm btn-secondary dropdown-toggle"
-                                                                    type="button" id="dropdownMenu<?php echo $row['id']; ?>"
-                                                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                                                    Actions
-                                                                </button>
-                                                                <ul class="dropdown-menu"
-                                                                    aria-labelledby="dropdownMenu<?php echo $row['id']; ?>">
-                                                                    <li><a class="dropdown-item"
-                                                                            href="/campus_ems/event-details.php?id=<?php echo $row['id']; ?>">View
-                                                                            Details</a></li>
-                                                                    <?php if (isset($row['status']) && $row['status'] === 'active'): ?>
-                                                                        <li><a class="dropdown-item"
-                                                                                href="edit-form.php?id=<?php echo $row['id']; ?>">Edit</a>
-                                                                        </li>
-                                                                        <li><a class="dropdown-item" href="javascript:void(0)"
-                                                                                onclick="confirmCancel(<?php echo $row['id']; ?>)">Cancel
-                                                                                Event</a></li>
-                                                                    <?php endif; ?>
-                                                                </ul>
-                                                            </div>
+                                                            <?php echo $status_badge; ?><br>
+                                                            <?php if ($status_time): ?>
+                                                                <small><?php echo $status_time_label . ': ' . $status_time; ?></small>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <a href="/campus_ems/event-details.php?id=<?php echo $row['id']; ?>"
+                                                                class="btn btn-sm btn-primary m-1" title="View Details"><i
+                                                                    class="fa fa-eye"></i></a>
+                                                            <?php if (isset($row['status']) && $row['status'] === 'active'): ?>
+                                                                <a href="edit-form.php?id=<?php echo $row['id']; ?>"
+                                                                    class="btn btn-sm btn-warning m-1" title="Edit"><i
+                                                                        class="fa fa-pen-to-square"></i></a>
+                                                                <button class="btn btn-sm btn-danger m-1" title="Cancel Event"
+                                                                    onclick="confirmCancel(<?php echo $row['id']; ?>)"><i
+                                                                        class="fa fa-ban"></i></button>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endwhile; ?>
@@ -185,7 +214,7 @@ session_start();
     <div class="modal fade" tabindex="-1" role="dialog" id="cancelEventModal">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content rounded-3 shadow">
-                <div class="modal-body p-4 text-center text-black">
+                <div class="modal-body p-4 text-center text-white">
                     <h5 class="mb-2">Cancel Event</h5>
                     <p class="mb-0">Are you sure you want to cancel this event?</p>
                 </div>

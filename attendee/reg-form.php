@@ -141,9 +141,12 @@ mysqli_query($con, $update_status_query);
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
+            border: none !important;
         }
 
         .form-title {
@@ -153,7 +156,7 @@ mysqli_query($con, $update_status_query);
         }
 
         label.form-label {
-            color: black !important;
+            color: #fff !important;
         }
 
         .error-message {
@@ -167,7 +170,36 @@ mysqli_query($con, $update_status_query);
         }
 
         .select2-container--default .select2-selection--single {
-            width: 100% !important;
+            background: rgba(43, 45, 66, 0.3) !important;
+            color: #fff !important;
+            border: none !important;
+            border-radius: 0.5rem !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #fff !important;
+        }
+
+        .select2-dropdown {
+            background: rgba(43, 45, 66, 0.95) !important;
+            color: #fff !important;
+            border-radius: 0.5rem !important;
+            border: none !important;
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: var(--primary) !important;
+            color: #fff !important;
+        }
+
+        label,
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #fff !important;
+        }
+
+        .select2-container--default .select2-selection--single {
+            width: 100%;
             height: 38px !important;
             padding: 0.375rem 0.75rem !important;
             border: 1px solid #ced4da !important;
@@ -175,19 +207,21 @@ mysqli_query($con, $update_status_query);
             font-size: 1rem !important;
             line-height: 1.5 !important;
             box-sizing: border-box;
-            background-color: #fff !important;
-            display: flex !important;
-            align-items: center !important;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
+            border: none !important;
         }
 
         .select2-container--default .select2-results__option {
-            color: #111 !important;
-        }
-
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            color: #111 !important;
-            line-height: 1.5 !important;
-            padding-left: 0 !important;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
+            border: none !important;
         }
 
         .select2-container--default .select2-selection--single .select2-selection__arrow {
@@ -195,6 +229,31 @@ mysqli_query($con, $update_status_query);
             top: 50% !important;
             transform: translateY(-50%);
             right: 6px !important;
+        }
+
+        .select2-search__field {
+            background: rgba(43, 45, 66, 0.8) !important;
+            color: #fff !important;
+            border: none !important;
+            border-radius: 0.5rem !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        .select2-search__field::placeholder {
+            color: #ccc !important;
+            opacity: 1;
+        }
+
+        .select2-selection__clear {
+            color: #fff !important;
+            opacity: 1 !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%) !important;
+            border: none !important;
+            color: #fff !important;
         }
     </style>
 
@@ -240,7 +299,7 @@ mysqli_query($con, $update_status_query);
 
     <div class="container mt-2">
         <div class="form-container">
-            <h2 class="form-title">Event Registration Form</h2>
+            <h2 class="form-title text-white">Event Registration Form</h2>
 
             <?php if (!empty($errors)): ?>
                 <div class="alert alert-danger">
@@ -351,8 +410,9 @@ mysqli_query($con, $update_status_query);
 
                 <div class="mb-3 form-check">
                     <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
-                    <label class="form-check-label text-black" for="terms">
-                        I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">terms and
+                    <label class="form-check-label text-white" for="terms">
+                        I agree to the <a href="#" class="text-white text-decoration-none fw-semibold"
+                            data-bs-toggle="modal" data-bs-target="#termsModal">terms and
                             conditions</a>
                     </label>
                 </div>
@@ -373,7 +433,8 @@ mysqli_query($con, $update_status_query);
                 width: 'resolve',
                 placeholder: 'Select Section',
                 allowClear: true,
-                dropdownParent: $('.section-dropdown-parent')
+                dropdownParent: $('body'),
+                dropdownPosition: 'below'
             });
 
             $('.event-select').select2({

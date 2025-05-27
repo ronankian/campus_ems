@@ -122,13 +122,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
+        :root {
+            --primary: #784ba0;
+            --gradient-start: #ff3cac;
+            --gradient-end: #38f9d7;
+            --surface-dark: #2b2d42;
+            --accent: #ffb347;
+            --text-main: #f0f0f0;
+            --text-dark: #2b2d42;
+        }
+
         .form-container {
             max-width: 900px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
+            border: none !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%) !important;
+            border: none !important;
+            color: #fff !important;
+        }
+
+        .btn-secondary {
+            background: var(--surface-dark) !important;
+            color: #fff !important;
+            border: none !important;
         }
 
         .form-title {
@@ -138,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         label.form-label {
-            color: black !important;
+            color: #f8f9fa !important;
         }
 
         .add-btn,
@@ -148,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .file-size-info {
             font-size: 0.9em;
-            color: #888;
+            color: #fff;
         }
 
         #file-list {
@@ -158,8 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .file-chip {
-            background: #f8f9fa;
-            border: 1px solid #ced4da;
+            border: 1px solid var(--primary);
             min-width: 180px;
             max-width: 100%;
             display: flex;
@@ -186,6 +210,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             white-space: nowrap;
             display: inline-block;
         }
+
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            /* Inverts icon color */
+        }
+
+        .custom-select-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .custom-select {
+            appearance: none;
+            /* Remove default arrow */
+            -webkit-appearance: none;
+            /* For Safari */
+            -moz-appearance: none;
+            /* For Firefox */
+            background-color: #fff;
+            color: white;
+            padding-right: 2.5rem;
+            /* Leave space for custom arrow */
+        }
+
+        .custom-select-wrapper::after {
+            content: '▼';
+            /* Or use an SVG/icon font */
+            color: white;
+            position: absolute;
+            right: 2rem;
+            top: 75%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -209,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </a>
                 </li>
                 <li class="breadcrumb-item active" aria-current="page" style="color: #fff;">
-                    Event Creation Form
+                    Event Creation Form (Edit)
                 </li>
             </ol>
 
@@ -227,7 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="container mt-2">
         <div class="form-container">
-            <h2 class="form-title">Event Creation Form (Edit)</h2>
+            <h2 class="form-title text-white">Event Creation Form (Edit)</h2>
 
             <?php if (!empty($errors)): ?>
                 <div class="alert alert-danger">
@@ -263,9 +321,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             maxlength="50"
                             value="<?php echo $edit_mode ? htmlspecialchars($event_data['event_title']) : ''; ?>">
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="custom-select-wrapper col-md-4 mb-3">
                         <label for="category" class="form-label">Category</label>
-                        <select class="form-select" id="category" name="category" required>
+                        <select class="form-select custom-select" id="category" name="category" required>
                             <option value="">Select Category</option>
                             <option value="Seminar" <?php echo $edit_mode && $event_data['category'] === 'Seminar' ? 'selected' : ''; ?>>Seminar</option>
                             <option value="Workshop" <?php echo $edit_mode && $event_data['category'] === 'Workshop' ? 'selected' : ''; ?>>Workshop</option>
@@ -342,7 +400,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <?php endforeach; ?>
                         </div>
                         <!-- Organizer Info -->
-                        <h5 class="mt-3 mb-3 text-black">Organizer Information</h5>
+                        <h5 class="mt-3 mb-3 text-white">Organizer Information</h5>
                         <div class="row">
                             <div class="col-md-8 mb-3">
                                 <label for="fullname" class="form-label">Full Name</label>

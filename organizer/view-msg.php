@@ -15,17 +15,15 @@ session_start();
     <style>
         .dashboard-container {
             border-radius: 6px;
-            backdrop-filter: blur(8px);
         }
 
-        .card-summary {
+        .card {
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-
-        .card-summary .icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
+            border: none !important;
         }
 
         .file-size-info {
@@ -68,6 +66,12 @@ session_start();
             white-space: nowrap;
             display: inline-block;
         }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%) !important;
+            border: none !important;
+            color: #fff !important;
+        }
     </style>
 
 
@@ -84,7 +88,7 @@ session_start();
 
             <?php include 'sidebar.php'; ?>
 
-            <div class="col-md-9 ps-4">
+            <div class="col-md-9">
                 <div class="row">
                     <div class="create-box col-12">
                         <div class="card shadow rounded-4 border-0">
@@ -105,6 +109,13 @@ session_start();
                                         $subject_type = $message_data['subject_type'];
                                         $subject_custom = $message_data['subject_custom'];
                                         $message = $message_data['message'];
+                                        // Get attached files
+                                        $attached_files = [];
+                                        if (!empty($message_data['attach_file'])) {
+                                            $attached_files = json_decode($message_data['attach_file'], true);
+                                            if (!is_array($attached_files))
+                                                $attached_files = [];
+                                        }
                                     }
                                 }
                                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -188,15 +199,17 @@ session_start();
                                     </div>
                                 <?php endif; ?>
                                 <form method="POST" action="" autocomplete="off" enctype="multipart/form-data">
-                                    <div class="mb-3">
-                                        <label for="title" class="form-label">Title</label>
-                                        <input type="text" class="form-control" id="title" name="title"
-                                            value="<?php echo isset($title) ? htmlspecialchars($title) : ''; ?>"
-                                            readonly disabled>
+                                    <div class="row mb-3 align-items-center">
+                                        <label for="title" class="form-label col-md-2 mb-0">Title</label>
+                                        <div class="col-md-10">
+                                            <input type="text" class="form-control" id="title" name="title"
+                                                value="<?php echo isset($title) ? htmlspecialchars($title) : ''; ?>"
+                                                readonly disabled>
+                                        </div>
                                     </div>
-                                    <div class="row">
-                                        <div class="col-md-4 mb-3">
-                                            <label for="subject_type" class="form-label">Subject</label>
+                                    <div class="row mb-3 align-items-center">
+                                        <label for="subject_type" class="form-label col-md-2 mb-0">Subject</label>
+                                        <div class="col-md-3">
                                             <select class="form-select" id="subject_type" name="subject_type" readonly
                                                 disabled>
                                                 <option value="report" <?php if (isset($subject_type) && $subject_type == 'report')
@@ -215,27 +228,36 @@ session_start();
                                                     echo 'selected'; ?>>Event</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-8 mb-3" id="customSubjectDiv">
-                                            <label for="subject_custom" class="form-label">Specified</label>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label for="subject_custom" class="form-label col-md-2 mb-0">Specified</label>
+                                        <div class="col-md-10">
                                             <input type="text" class="form-control" id="subject_custom"
                                                 name="subject_custom"
                                                 value="<?php echo isset($subject_custom) ? htmlspecialchars($subject_custom) : ''; ?>"
                                                 readonly disabled>
                                         </div>
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="message" class="form-label">Message</label>
-                                        <textarea class="form-control" id="message" name="message" rows="3" readonly
-                                            disabled><?php echo isset($message) ? htmlspecialchars($message) : ''; ?></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="attach_file" class="form-label">Attach File <span
-                                                class="file-size-info">(Max 5MB)</span></label>
-                                        <input type="file" class="form-control" id="attach_file" name="attach_file[]"
-                                            accept=".pdf,.doc,.docx,.jpg,.png,.jpeg">
-                                        <div id="file-list" class="mt-2" style="max-width: 100%; overflow-x: hidden;">
+                                    <div class="row mb-3 align-items-center">
+                                        <label for="message" class="form-label col-md-2 mb-0">Message</label>
+                                        <div class="col-md-10">
+                                            <textarea class="form-control" id="message" name="message" rows="3" readonly
+                                                disabled><?php echo isset($message) ? htmlspecialchars($message) : ''; ?></textarea>
                                         </div>
                                     </div>
+                                    <?php if (!empty($attached_files)): ?>
+                                        <div class="row mb-3 align-items-center">
+                                            <label class="form-label col-md-2 mb-0">Attached File(s):</label>
+                                            <div class="col-md-10">
+                                                <?php foreach ($attached_files as $file): ?>
+                                                    <a href="../uploads/<?php echo htmlspecialchars($file); ?>" target="_blank"
+                                                        class="btn btn-sm btn-outline-info mb-1">
+                                                        <i class="fa fa-paperclip"></i> <?php echo htmlspecialchars($file); ?>
+                                                    </a>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                     <div class="text-center">
                                         <a href="inbox.php" class="btn btn-primary px-4">Back</a>
                                     </div>

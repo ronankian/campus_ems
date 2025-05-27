@@ -6,6 +6,18 @@ $event_id = $is_event_report ? intval($_GET['event_id']) : null;
 $event_title = $is_event_report ? $_GET['event_title'] : '';
 // Detect if this is a request to upgrade to organizer
 $is_request_organizer = isset($_GET['request_organizer']) && $_GET['request_organizer'] == '1';
+$subject_custom = '';
+if ($is_event_report) {
+    $subject_custom = $event_title;
+} else if ($is_request_organizer) {
+    if (isset($_GET['subject_custom']) && $_GET['subject_custom'] === 'Request Unban') {
+        $subject_custom = 'Request Unban';
+    } else {
+        $subject_custom = 'Upgrade to Organizer';
+    }
+} else if (isset($_POST['subject_custom'])) {
+    $subject_custom = $_POST['subject_custom'];
+}
 ?>
 
 <!DOCTYPE html>
@@ -21,17 +33,27 @@ $is_request_organizer = isset($_GET['request_organizer']) && $_GET['request_orga
     <style>
         .dashboard-container {
             border-radius: 6px;
-            backdrop-filter: blur(8px);
         }
 
-        .card-summary {
+        .card {
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
+            border: none !important;
         }
 
-        .card-summary .icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%) !important;
+            border: none !important;
+            color: #fff !important;
+        }
+
+        .btn-secondary {
+            background: var(--surface-dark) !important;
+            color: #fff !important;
+            border: none !important;
         }
     </style>
 
@@ -67,7 +89,11 @@ $is_request_organizer = isset($_GET['request_organizer']) && $_GET['request_orga
                                         $subject_custom = mysqli_real_escape_string($con, $event_title);
                                     } else if ($is_request_organizer) {
                                         $subject_type = 'request';
-                                        $subject_custom = 'Upgrade to Organizer';
+                                        if (isset($_GET['subject_custom']) && $_GET['subject_custom'] === 'Request Unban') {
+                                            $subject_custom = 'Request Unban';
+                                        } else {
+                                            $subject_custom = 'Upgrade to Organizer';
+                                        }
                                     } else {
                                         $subject_type = mysqli_real_escape_string($con, $_POST['subject_type']);
                                         $subject_custom = isset($_POST['subject_custom']) ? mysqli_real_escape_string($con, $_POST['subject_custom']) : '';
@@ -118,7 +144,7 @@ $is_request_organizer = isset($_GET['request_organizer']) && $_GET['request_orga
                                         if ($is_event_report && $event_id) {
                                             $query = "INSERT INTO inbox (user_id, title, subject_type, subject_custom, message, attach_file, event_id, created_at) VALUES ('$user_id', '$title', 'event', '" . mysqli_real_escape_string($con, $event_title) . "', '$message', '$attach_files_json', '$event_id', '$created_at')";
                                         } else if ($is_request_organizer) {
-                                            $query = "INSERT INTO inbox (user_id, title, subject_type, subject_custom, message, attach_file, created_at) VALUES ('$user_id', '$title', 'request', 'Upgrade to Organizer', '$message', '$attach_files_json', '$created_at')";
+                                            $query = "INSERT INTO inbox (user_id, title, subject_type, subject_custom, message, attach_file, created_at) VALUES ('$user_id', '$title', 'request', '" . mysqli_real_escape_string($con, $subject_custom) . "', '$message', '$attach_files_json', '$created_at')";
                                         } else {
                                             $query = "INSERT INTO inbox (user_id, title, subject_type, subject_custom, message, attach_file, created_at) VALUES ('$user_id', '$title', '$subject_type', '$subject_custom', '$message', '$attach_files_json', '$created_at')";
                                         }
@@ -206,8 +232,11 @@ $is_request_organizer = isset($_GET['request_organizer']) && $_GET['request_orga
                                                     value="<?php echo htmlspecialchars($event_title); ?>">
                                             <?php elseif ($is_request_organizer): ?>
                                                 <input type="text" class="form-control" id="subject_custom"
-                                                    name="subject_custom" value="Upgrade to Organizer" readonly disabled>
-                                                <input type="hidden" name="subject_custom" value="Upgrade to Organizer">
+                                                    name="subject_custom"
+                                                    value="<?php echo htmlspecialchars($subject_custom); ?>" readonly
+                                                    disabled>
+                                                <input type="hidden" name="subject_custom"
+                                                    value="<?php echo htmlspecialchars($subject_custom); ?>">
                                             <?php else: ?>
                                                 <input type="text" class="form-control" id="subject_custom"
                                                     name="subject_custom"
@@ -220,7 +249,7 @@ $is_request_organizer = isset($_GET['request_organizer']) && $_GET['request_orga
                                         <textarea class="form-control" id="message" name="message" rows="3"
                                             maxlength="2000"
                                             required><?php echo isset($message) ? htmlspecialchars($message) : ''; ?></textarea>
-                                        <div class="form-text text-end">Maximum 2000 characters.</div>
+                                        <div class="form-text text-white-50 text-end">Maximum 2000 characters.</div>
                                     </div>
                                     <div class="mb-3">
                                         <label for="attach_file" class="form-label">Attach File <span

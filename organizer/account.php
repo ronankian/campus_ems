@@ -136,8 +136,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                             $selected_organization = $user['organization'] ?? '';
                             ?>
                             <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-                                <div class="card shadow rounded-4 border-0 p-5 w-100"
-                                    style="max-width: 950px; margin: 0 auto; border-radius: 2rem; background: #fff;">
+                                <div class="card shadow rounded-4 border-0 p-5 w-100 text-white"
+                                    style="max-width: 950px; margin: 0 auto; border-radius: 2rem; background: rgba(43, 45, 66, 0.3); backdrop-filter: blur(10px); color: #fff; border: none;">
                                     <div class="d-flex flex-column align-items-center mb-4">
                                         <div class="d-flex align-items-center justify-content-center mb-3"
                                             style="width: 120px; height: 120px; border-radius: 50%; background: <?php echo $circle_color; ?>; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
@@ -145,15 +145,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                                 style="font-size: 3.8rem; color: #fff; font-weight: 700; letter-spacing: 2px; user-select: none;">
                                                 <?php echo $initial; ?> </span>
                                         </div>
-                                        <h2 class="fw-bold mb-2 text-center"
-                                            style="font-size: 2.4rem; letter-spacing: 1px; color: #222;">
+                                        <h2 class="fw-bold mb-2 text-center text-white"
+                                            style="font-size: 2.4rem; letter-spacing: 1px;">
                                             <?php echo htmlspecialchars($firstname . ' ' . $lastname); ?>
                                         </h2>
                                         <span class="badge <?php echo $badge_class; ?> mb-2"
                                             style="font-size:1.1em; min-width:90px; text-align:center; padding:0.6em 1.2em; border-radius:1em; letter-spacing:1px;">
                                             <?php echo ucfirst($role); ?> </span>
                                         <div class="mt-2 mb-1">
-                                            <div class="fs-6 text-muted">Member since
+                                            <div class="fs-6 text-white-50">Member since
                                                 <?php echo date('M d, Y', strtotime($user['created_at'])); ?>
                                             </div>
                                         </div>
@@ -161,11 +161,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                     <form method="POST" id="aboutMeForm">
                                         <div class="row mb-4 w-100" style="max-width:700px;margin:0 auto;">
                                             <div class="col-md-6 col-12 mb-3 mb-md-0">
-                                                <label class="form-label fw-semibold text-muted">Username</label>
-                                                <div class="fs-5"><?php echo htmlspecialchars($user['username']); ?></div>
+                                                <label class="form-label fw-semibold text-white">Username</label>
+                                                <div class="fs-5 text-white">
+                                                    <?php echo htmlspecialchars($user['username']); ?>
+                                                </div>
                                             </div>
                                             <div class="col-md-6 col-12 mb-3 mb-md-0 text-end">
-                                                <label class="form-label fw-semibold text-muted text-end w-100">Contact
+                                                <label class="form-label fw-semibold text-white text-end w-100">Contact
                                                     No.</label>
                                                 <input type="text" name="contact_no" id="contactNoInput" pattern="\d{7,11}"
                                                     maxlength="11" minlength="7" class="form-control text-end"
@@ -175,14 +177,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                                     oninput="this.value=this.value.replace(/[^\d]/g,'').slice(0,11);">
                                             </div>
                                         </div>
-                                        <div class="row mb-4 w-100" style="max-width:700px;margin:0 auto;">
+                                        <div class="row mb-4 w-100 justify-content-between"
+                                            style="max-width:700px;margin:0 auto;">
                                             <div class="col-md-6 col-12 mb-3 mb-md-0">
-                                                <label class="form-label fw-semibold text-muted">Email Address</label>
-                                                <div class="fs-5"><?php echo htmlspecialchars($user['email']); ?></div>
+                                                <label class="form-label fw-semibold text-white">Email Address</label>
+                                                <div class="fs-5 text-white"><?php echo htmlspecialchars($user['email']); ?>
+                                                </div>
                                             </div>
-                                            <div class="col-md-6 col-12 mb-3 mb-md-0 text-end">
+                                            <div class="col-md-4 col-12 mb-3 mb-md-0 text-end">
                                                 <label
-                                                    class="form-label fw-semibold text-muted text-end w-100">Organization</label>
+                                                    class="form-label fw-semibold text-white text-end w-100">Organization</label>
                                                 <?php include '../organizer/org.php'; ?>
                                             </div>
                                         </div>

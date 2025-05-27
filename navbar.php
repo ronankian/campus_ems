@@ -12,12 +12,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
 
     <style>
-        .navbar-logo-text {
-            color: white;
+        :root {
+            --primary: #784ba0;
+            --gradient-start: #ff3cac;
+            --gradient-end: #38f9d7;
+            --surface-dark: #2b2d42;
+            --accent: #ffb347;
+            --text-main: #f0f0f0;
+            --text-dark: #2b2d42;
         }
 
-        .navbar-logo-text:hover {
-            background: linear-gradient(to bottom, rgb(223, 7, 7), rgb(223, 202, 15));
+        .form-control::placeholder,
+        .form-select::placeholder {
+            color: #fff !important;
+            opacity: 1;
+        }
+
+        .form-control,
+        .form-select {
+            background: rgba(43, 45, 66, 0.3) !important;
+            color: #fff !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px rgba(120, 75, 160, 0.15) !important;
+            background: rgba(43, 45, 66, 0.5) !important;
+            color: #fff !important;
+        }
+
+        .navbar-logo-text {
+            background: linear-gradient(135deg, #ff3cac 0%, #38f9d7 100%);
             background-clip: text;
             color: transparent;
         }
@@ -25,7 +52,7 @@
         .navbar1,
         .navbar2,
         .offcanvas {
-            background: linear-gradient(rgba(26, 34, 40, 1), rgba(0, 0, 0, 0.3)) !important;
+            background: rgba(43, 45, 66, 0.7) !important;
             box-shadow: none !important;
             padding: 0.5rem 0;
         }
@@ -48,7 +75,7 @@
             font-size: 1.5rem;
             color: #333;
             letter-spacing: -1px;
-            margin-right: 2rem;
+            margin-left: 1rem;
             display: flex;
             align-items: center;
             text-decoration: none;
@@ -70,7 +97,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-right: 2rem;
+
             min-width: 0;
         }
 
@@ -100,7 +127,11 @@
 
         .nav-link:hover,
         .nav-link.active {
-            color: rgb(228, 138, 20) !important;
+            color: var(--primary) !important;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .nav-link::after {
@@ -109,7 +140,7 @@
             margin: 0 auto;
             width: 0;
             height: 2px;
-            background: rgb(228, 138, 20);
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
             transition: width 0.2s;
         }
 
@@ -136,7 +167,11 @@
 
         .navbar-icons i:hover,
         .navbar-icons .fa:hover {
-            color: rgb(228, 138, 20);
+            color: var(--primary) !important;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .navbar-icons i:last-child,
@@ -145,7 +180,7 @@
         }
 
         .offcanvas {
-            background: rgb(50, 50, 50) !important;
+            background: var(--surface-dark) !important;
             color: white;
         }
 
@@ -167,11 +202,15 @@
 
         .offcanvas .nav-link:hover,
         .offcanvas .nav-link.active {
-            color: rgb(228, 138, 20) !important;
+            color: var(--primary) !important;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .offcanvas .nav-link::after {
-            background: rgb(228, 138, 20);
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
         }
 
         .offcanvas-btn {
@@ -183,8 +222,11 @@
         }
 
         .offcanvas-btn:hover {
-            border-color: rgb(228, 138, 20);
-            color: rgb(228, 138, 20);
+            color: var(--primary) !important;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .btn-close {
@@ -293,7 +335,7 @@
         }
 
         .dropdown-menu {
-            background: #222;
+            background: var(--surface-dark);
             border: none;
             min-width: 140px;
         }
@@ -308,7 +350,7 @@
 
         .dropdown-item:hover,
         .dropdown-item:focus {
-            background: rgb(228, 138, 20);
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
             color: #fff;
         }
 
@@ -344,13 +386,31 @@
         }
 
         .search-input-wrapper input[type="text"]:focus {
-            border-color: #bfa14a;
+            border-color: #6665ee;
             outline: none;
             box-shadow: 0 0 0 2px rgba(228, 138, 20, 0.08);
         }
 
         .dropdown-menu.p-2 {
             min-width: 250px;
+        }
+
+        .user-dropdown:hover .username,
+        .user-dropdown:focus-within .username {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            transition: color 0.2s;
+        }
+
+        .icon-active {
+            color: var(--primary) !important;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
     </style>
 
@@ -369,12 +429,22 @@
     $is_admin_dashboard = strpos($current_page, '/admin/dashboard.php') !== false;
     $is_attendee_dashboard = strpos($current_page, '/attendee/dashboard.php') !== false;
     $is_organizer_dashboard = strpos($current_page, '/organizer/dashboard.php') !== false;
+    // Fetch user role if logged in
+    $user_role = null;
+    if (isset($_SESSION['user_id'])) {
+        $con = mysqli_connect('localhost', 'root', '', 'campus_ems');
+        $uid = $_SESSION['user_id'];
+        $role_result = mysqli_query($con, "SELECT role FROM usertable WHERE id = '$uid' LIMIT 1");
+        if ($role_result && mysqli_num_rows($role_result) > 0) {
+            $role_row = mysqli_fetch_assoc($role_result);
+            $user_role = $role_row['role'];
+        }
+    }
     ?>
 
     <nav class="navbar1 fixed-top" id="navbar">
         <div class="container">
             <a href="/campus_ems/home.php" class="navbar-logo">
-                <img src="/campus_ems/assets/images/calendar.png" width="32" height="32" alt="logo">
                 <span class="navbar-logo-text">EventHub</span>
             </a>
             <div class="navbar-center">
@@ -389,14 +459,15 @@
             <div class="navbar-icons">
                 <div class="dropdown d-inline-block" id="searchDropdownDesktop" style="position: relative;">
                     <i class="fa fa-search" id="searchDropdownToggleDesktop" style="cursor:pointer"></i>
-                    <div class="dropdown-menu p-2" id="searchDropdownMenuDesktop"
+                    <div class="dropdown-menu p-2 rounded-pill" id="searchDropdownMenuDesktop"
                         style="min-width: 250px; right: 0; left: auto;">
                         <form class="d-flex" action="/campus_ems/search.php" method="get"
                             onsubmit="return searchSubmitHandler();" style="width:100%;">
                             <div class="search-input-wrapper w-100">
                                 <i class="fa fa-magnifying-glass"></i>
-                                <input class="form-control" type="text" name="keyword" id="navbarSearchInputDesktop"
-                                    placeholder="Search events..." autocomplete="off" required>
+                                <input class="form-control rounded-pill" type="text" name="keyword"
+                                    id="navbarSearchInputDesktop" placeholder="Search events..." autocomplete="off"
+                                    required>
                             </div>
                         </form>
                     </div>
@@ -406,19 +477,28 @@
                     <i class="fa fa-user" onclick="window.location='login/login-user.php'" style="cursor:pointer"></i>
                 <?php else: ?>
                     <!-- Logged-in: show name and dropdown -->
-                    <div class="dropdown d-inline-block">
-                        <span class="fw-bold" style="color:white;">
+                    <div class="dropdown d-inline-block user-dropdown">
+                        <span class="fw-bold username" style="color:white;">
                             <?php echo isset($_SESSION['firstname']) ? htmlspecialchars($_SESSION['firstname']) : ''; ?>
                         </span>
-                        <i class="fa fa-user dropdown-toggle ms-1" id="userDropdown" data-bs-toggle="dropdown"
-                            aria-expanded="false" style="cursor:pointer;"></i>
+                        <?php if ($user_role === 'banned'): ?>
+                            <i class="fa fa-user-lock dropdown-toggle ms-1" id="userDropdown" data-bs-toggle="dropdown"
+                                aria-expanded="false" title="Banned" style="cursor:pointer;"></i>
+                        <?php else: ?>
+                            <i class="fa fa-user dropdown-toggle ms-1" id="userDropdown" data-bs-toggle="dropdown"
+                                aria-expanded="false" style="cursor:pointer;"></i>
+                        <?php endif; ?>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <?php if ($_SESSION['role'] === 'admin' && !$is_admin_dashboard): ?>
-                                <li><a class="dropdown-item" href="/campus_ems/admin/dashboard.php">Dashboard</a></li>
-                            <?php elseif ($_SESSION['role'] === 'attendee' && !$is_attendee_dashboard): ?>
+                            <?php if ($user_role === 'banned'): ?>
                                 <li><a class="dropdown-item" href="/campus_ems/attendee/dashboard.php">Dashboard</a></li>
-                            <?php elseif ($_SESSION['role'] === 'organizer' && !$is_organizer_dashboard): ?>
-                                <li><a class="dropdown-item" href="/campus_ems/organizer/dashboard.php">Dashboard</a></li>
+                            <?php else: ?>
+                                <?php if ($_SESSION['role'] === 'admin' && !$is_admin_dashboard): ?>
+                                    <li><a class="dropdown-item" href="/campus_ems/admin/dashboard.php">Dashboard</a></li>
+                                <?php elseif ($_SESSION['role'] === 'attendee' && !$is_attendee_dashboard): ?>
+                                    <li><a class="dropdown-item" href="/campus_ems/attendee/dashboard.php">Dashboard</a></li>
+                                <?php elseif ($_SESSION['role'] === 'organizer' && !$is_organizer_dashboard): ?>
+                                    <li><a class="dropdown-item" href="/campus_ems/organizer/dashboard.php">Dashboard</a></li>
+                                <?php endif; ?>
                             <?php endif; ?>
                             <li><a class="dropdown-item" href="/campus_ems/login/logout-user.php">Logout</a></li>
                         </ul>
@@ -431,21 +511,21 @@
     <nav class="navbar2 fixed-top navbar" id="navbar" aria-label="Offcanvas navbar">
         <div class="container d-flex align-items-center justify-content-between">
             <a href="/campus_ems/home.php" class="navbar-logo">
-                <img src="/campus_ems/assets/images/calendar.png" width="32" height="32" alt="logo">
                 <span class="navbar-logo-text text-white">EventHub</span>
             </a>
             <div class="d-flex align-items-center ms-auto">
                 <div class="navbar-icons me-2">
                     <div class="dropdown d-inline-block" id="searchDropdownMobile" style="position: relative;">
                         <i class="fa fa-search" id="searchDropdownToggleMobile" style="cursor:pointer"></i>
-                        <div class="dropdown-menu p-2" id="searchDropdownMenuMobile"
+                        <div class="dropdown-menu p-2 rounded-pill" id="searchDropdownMenuMobile"
                             style="min-width: 250px; right: 0; left: auto;">
                             <form class="d-flex" action="/campus_ems/search.php" method="get"
                                 onsubmit="return searchSubmitHandler();" style="width:100%;">
                                 <div class="search-input-wrapper w-100">
                                     <i class="fa fa-magnifying-glass"></i>
-                                    <input class="form-control" type="text" name="keyword" id="navbarSearchInputMobile"
-                                        placeholder="Search events..." autocomplete="off" required>
+                                    <input class="form-control rounded-pill" type="text" name="keyword"
+                                        id="navbarSearchInputMobile" placeholder="Search events..." autocomplete="off"
+                                        required>
                                 </div>
                             </form>
                         </div>
@@ -455,19 +535,28 @@
                         <i class="fa fa-user" onclick="window.location='login/login-user.php'" style="cursor:pointer"></i>
                     <?php else: ?>
                         <!-- Logged-in: show name and dropdown -->
-                        <div class="dropdown d-inline-block">
-                            <span class="fw-bold" style="color:white;">
+                        <div class="dropdown d-inline-block user-dropdown">
+                            <span class="fw-bold username" style="color:white;">
                                 <?php echo isset($_SESSION['firstname']) ? htmlspecialchars(string: $_SESSION['firstname']) : ''; ?>
                             </span>
-                            <i class="fa fa-user dropdown-toggle ms-1" id="userDropdown" data-bs-toggle="dropdown"
-                                aria-expanded="false" style="cursor:pointer;"></i>
+                            <?php if ($user_role === 'banned'): ?>
+                                <i class="fa fa-user-lock dropdown-toggle ms-1" id="userDropdown" data-bs-toggle="dropdown"
+                                    aria-expanded="false" title="Banned" style="cursor:pointer;"></i>
+                            <?php else: ?>
+                                <i class="fa fa-user dropdown-toggle ms-1" id="userDropdown" data-bs-toggle="dropdown"
+                                    aria-expanded="false" style="cursor:pointer;"></i>
+                            <?php endif; ?>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <?php if ($_SESSION['role'] === 'admin' && !$is_admin_dashboard): ?>
-                                    <li><a class="dropdown-item" href="/campus_ems/admin/dashboard.php">Dashboard</a></li>
-                                <?php elseif ($_SESSION['role'] === 'attendee' && !$is_attendee_dashboard): ?>
+                                <?php if ($user_role === 'banned'): ?>
                                     <li><a class="dropdown-item" href="/campus_ems/attendee/dashboard.php">Dashboard</a></li>
-                                <?php elseif ($_SESSION['role'] === 'organizer' && !$is_organizer_dashboard): ?>
-                                    <li><a class="dropdown-item" href="/campus_ems/organizer/dashboard.php">Dashboard</a></li>
+                                <?php else: ?>
+                                    <?php if ($_SESSION['role'] === 'admin' && !$is_admin_dashboard): ?>
+                                        <li><a class="dropdown-item" href="/campus_ems/admin/dashboard.php">Dashboard</a></li>
+                                    <?php elseif ($_SESSION['role'] === 'attendee' && !$is_attendee_dashboard): ?>
+                                        <li><a class="dropdown-item" href="/campus_ems/attendee/dashboard.php">Dashboard</a></li>
+                                    <?php elseif ($_SESSION['role'] === 'organizer' && !$is_organizer_dashboard): ?>
+                                        <li><a class="dropdown-item" href="/campus_ems/organizer/dashboard.php">Dashboard</a></li>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                                 <li><a class="dropdown-item" href="/campus_ems/login/logout-user.php">Logout</a></li>
                             </ul>
@@ -482,7 +571,6 @@
                 aria-labelledby="offcanvasWithBothOptionsLabel">
                 <div class="offcanvas-header">
                     <a href="/campus_ems/home.php" class="navbar-logo">
-                        <img src="/campus_ems/assets/images/calendar.png" width="28" height="28" alt="logo">
                         <span class="navbar-logo-text text-white">EventHub</span>
                     </a>
                     <button type="button" class="btn-close z d-flex align-items-center justify-content-center"
@@ -541,12 +629,16 @@
                 searchMenu.classList.toggle('show');
                 if (searchMenu.classList.contains('show')) {
                     searchInput.focus();
+                    searchIcon.classList.add('icon-active');
+                } else {
+                    searchIcon.classList.remove('icon-active');
                 }
                 isOpen = searchMenu.classList.contains('show');
             });
             document.addEventListener('click', function (e) {
                 if (isOpen && !searchMenu.contains(e.target) && e.target !== searchIcon) {
                     searchMenu.classList.remove('show');
+                    searchIcon.classList.remove('icon-active');
                     isOpen = false;
                 }
             });
@@ -554,6 +646,26 @@
         document.addEventListener('DOMContentLoaded', function () {
             setupSearchDropdown('searchDropdownToggleDesktop', 'searchDropdownMenuDesktop', 'navbarSearchInputDesktop');
             setupSearchDropdown('searchDropdownToggleMobile', 'searchDropdownMenuMobile', 'navbarSearchInputMobile');
+            // User dropdown icon active state
+            document.querySelectorAll('.user-dropdown').forEach(function (dropdown) {
+                const icon = dropdown.querySelector('.fa-user.dropdown-toggle');
+                const menu = dropdown.querySelector('.dropdown-menu');
+                if (!icon || !menu) return;
+                icon.addEventListener('click', function (e) {
+                    setTimeout(function () {
+                        if (menu.classList.contains('show')) {
+                            icon.classList.add('icon-active');
+                        } else {
+                            icon.classList.remove('icon-active');
+                        }
+                    }, 10);
+                });
+                document.addEventListener('click', function (e) {
+                    if (!dropdown.contains(e.target)) {
+                        icon.classList.remove('icon-active');
+                    }
+                });
+            });
         });
         function searchSubmitHandler() {
             return true;

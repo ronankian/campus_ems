@@ -1,10 +1,18 @@
 <!-- Terms and Conditions Modal -->
+<style>
+    .modal-content {
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        background: rgba(43, 45, 66, 0.8) !important;
+        backdrop-filter: blur(10px) !important;
+    }
+</style>
+
 <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content text-black">
+        <div class="modal-content text-white">
             <div class="modal-header">
                 <h5 class="modal-title" id="termsModalLabel">Event Organizer Terms and Conditions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <h6 class="fw-bold">1. Event Creation and Management</h6>

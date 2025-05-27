@@ -32,6 +32,21 @@ if (!mysqli_query($con, $test_query)) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <style>
+        :root {
+            --primary: #784ba0;
+            --gradient-start: #ff3cac;
+            --gradient-end: #38f9d7;
+            --surface-dark: #2b2d42;
+            --accent: #ffb347;
+            --text-main: #f0f0f0;
+            --text-dark: #2b2d42;
+        }
+
+        body {
+            background: linear-gradient(120deg, var(--gradient-start) 0%, var(--gradient-end) 100%) fixed;
+            color: var(--text-main);
+        }
+
         h3,
         h5,
         p,
@@ -56,8 +71,17 @@ if (!mysqli_query($con, $test_query)) {
             transform: translateX(-50%);
             width: 4px;
             height: 100%;
-            background: #fff;
+            background: var(--primary);
             border-radius: 2px;
+        }
+
+        .timeline-view-all-link:hover,
+        .timeline-view-all-link:focus {
+            color: var(--primary) !important;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .timeline-event {
@@ -90,10 +114,11 @@ if (!mysqli_query($con, $test_query)) {
             transform: translateY(-50%);
             width: 24px;
             height: 24px;
-            background: #fff;
+            background: var(--surface-dark);
             border-radius: 50%;
-            border: 4px solid #FEC53A;
+            border: 4px solid var(--gradient-end);
             z-index: 1;
+            box-shadow: 0 0 0 4px var(--primary), 0 2px 8px #0002;
         }
 
         .timeline-event.left .timeline-dot {
@@ -110,47 +135,30 @@ if (!mysqli_query($con, $test_query)) {
         }
 
         .timeline-arrow-box {
-            background: rgba(30, 30, 30, 0.85);
-            border-radius: 8px;
+            background: rgba(43, 45, 66, 0.92);
+            border-radius: 12px;
             padding: 1rem 1.5rem 1.2rem 1.5rem;
-            color: #fff;
-            max-width: 320px;
+            color: var(--text-main);
+            max-width: 340px;
             min-width: 220px;
             width: 100%;
             min-height: 180px;
-            box-shadow: 0 2px 8px #0002;
+            box-shadow: 0 2px 12px 0 rgba(120, 75, 160, 0.12);
             display: flex;
             flex-direction: column;
             align-items: stretch;
             position: relative;
             margin-left: auto;
             margin-right: auto;
+            border: 2px solid var(--primary);
         }
 
         .timeline-arrow-box.left::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 100%;
-            transform: translateY(-50%);
-            width: 0;
-            height: 0;
-            border-top: 18px solid transparent;
-            border-bottom: 18px solid transparent;
-            border-left: 24px solid rgba(30, 30, 30, 0.85);
+            border-left: 24px solid rgba(43, 45, 66, 0.92);
         }
 
         .timeline-arrow-box.right::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            right: 100%;
-            transform: translateY(-50%);
-            width: 0;
-            height: 0;
-            border-top: 18px solid transparent;
-            border-bottom: 18px solid transparent;
-            border-right: 24px solid rgba(30, 30, 30, 0.85);
+            border-right: 24px solid rgba(43, 45, 66, 0.92);
         }
 
         .timeline-title {
@@ -158,19 +166,21 @@ if (!mysqli_query($con, $test_query)) {
             font-weight: 600;
             margin-bottom: 0.7rem;
             text-align: center;
+            color: #fff;
         }
 
         .timeline-img-box {
             width: 100%;
             height: 120px;
             background: #888;
-            border-radius: 6px;
+            border-radius: 8px;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 0.7rem;
             position: relative;
+            border: 2px solid var(--primary);
         }
 
         .no-image-box {
@@ -184,7 +194,7 @@ if (!mysqli_query($con, $test_query)) {
         }
 
         .no-image-watermark {
-            color: #fff;
+            color: var(--text-main);
             opacity: 0.5;
             font-size: 1.1rem;
             font-weight: bold;
@@ -197,7 +207,7 @@ if (!mysqli_query($con, $test_query)) {
             margin-top: 0.7rem;
             font-weight: 500;
             font-size: 1.05rem;
-            color: #FEC53A;
+            color: var(--gradient-end);
             text-align: center;
             width: 100%;
         }
@@ -235,6 +245,29 @@ if (!mysqli_query($con, $test_query)) {
                 min-width: 0;
             }
         }
+
+        .timeline-pointer {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            z-index: 2;
+        }
+
+        .timeline-event.left .timeline-pointer {
+            right: 25px;
+            border-top: 16px solid transparent;
+            border-bottom: 16px solid transparent;
+            border-left: 28px solid var(--primary);
+        }
+
+        .timeline-event.right .timeline-pointer {
+            left: 25px;
+            border-top: 16px solid transparent;
+            border-bottom: 16px solid transparent;
+            border-right: 28px solid var(--primary);
+        }
     </style>
 </head>
 
@@ -247,17 +280,10 @@ if (!mysqli_query($con, $test_query)) {
         <div class="row">
 
             <div class="col-md-12">
-                <style>
-                    .timeline-view-all-link:hover,
-                    .timeline-view-all-link:focus {
-                        color: #FEC53A !important;
-                    }
-                </style>
                 <div class="col-md-12 d-flex justify-content-between align-items-end border-bottom">
                     <h3 class="pb-2 fst-italic">Events Timeline</h3>
                     <a href="events.php"
-                        class="btn btn-link text-decoration-none text-white fw-bold d-flex align-items-center timeline-view-all-link"
-                        style="font-size: 1.1rem;">
+                        class="btn btn-link fs-5 text-decoration-none text-white fw-bold d-flex align-items-center timeline-view-all-link">
                         View all events
                         <i class="fa fa-caret-right ms-2"></i>
                     </a>
@@ -265,18 +291,35 @@ if (!mysqli_query($con, $test_query)) {
                 <div class="col-md-12 mt-3">
                     <div class="timeline">
                         <?php
-                        $query = "SELECT id, event_title, date_time, attach_file FROM create_events ORDER BY date_time ASC";
+                        $query = "SELECT id, event_title, date_time, ending_time, attach_file FROM create_events";
                         $result = mysqli_query($con, $query);
                         if (mysqli_num_rows($result) === 0): ?>
                             <div class="text-white-50 py-5">No events found.</div>
                         <?php else:
                             $events = [];
+                            $now = time();
                             while ($row = mysqli_fetch_assoc($result)) {
+                                $row['date_time'] = $row['date_time'] ?? '';
+                                $row['ending_time'] = $row['ending_time'] ?? '';
+                                $start = strtotime($row['date_time']);
+                                $end = !empty($row['ending_time']) ? strtotime($row['ending_time']) : $start;
+                                // Distance: if now is within the range, distance is 0; else min(abs(now-start), abs(now-end))
+                                if ($now >= $start && $now <= $end) {
+                                    $distance = 0;
+                                } else {
+                                    $distance = min(abs($now - $start), abs($now - $end));
+                                }
+                                $row['distance'] = $distance;
+                                $row['start'] = $start;
+                                $row['end'] = $end;
                                 $events[] = $row;
                             }
-                            // Sort so nearest date_time is at the top
+                            // Sort by distance ascending, then by start date ascending
                             usort($events, function ($a, $b) {
-                                return strtotime($a['date_time']) <=> strtotime($b['date_time']);
+                                if ($a['distance'] === $b['distance']) {
+                                    return $a['start'] <=> $b['start'];
+                                }
+                                return $a['distance'] <=> $b['distance'];
                             });
                             foreach ($events as $i => $event):
                                 $side = ($i % 2 === 0) ? 'left' : 'right';
@@ -296,6 +339,7 @@ if (!mysqli_query($con, $test_query)) {
                                 ?>
                                 <div class="timeline-event <?php echo $side; ?>">
                                     <div class="timeline-dot"></div>
+                                    <div class="timeline-pointer"></div>
                                     <a href="event-details.php?id=<?php echo $event['id']; ?>" class="timeline-box-link"
                                         style="text-decoration:none; color:inherit; width:100%;">
                                         <div class="timeline-arrow-box <?php echo $side; ?>">
@@ -305,7 +349,7 @@ if (!mysqli_query($con, $test_query)) {
                                             <div class="timeline-img-box">
                                                 <?php if ($img): ?>
                                                     <img src="<?php echo htmlspecialchars($img); ?>" alt="Event image"
-                                                        style="width:100%; height:100%; object-fit:cover; border-radius:6px;">
+                                                        style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
                                                 <?php else: ?>
                                                     <div class="no-image-box">
                                                         <span class="no-image-watermark">No Image Found</span>
@@ -315,7 +359,14 @@ if (!mysqli_query($con, $test_query)) {
                                         </div>
                                     </a>
                                     <div class="timeline-date-box">
-                                        <?php echo date('F d, Y', strtotime($event['date_time'])); ?>
+                                        <?php
+                                        $start_str = !empty($event['date_time']) ? date('F d, Y', strtotime($event['date_time'])) : '';
+                                        $end_str = !empty($event['ending_time']) ? date('F d, Y', strtotime($event['ending_time'])) : '';
+                                        echo $start_str;
+                                        if ($end_str && $end_str !== $start_str) {
+                                            echo ' - ' . $end_str;
+                                        }
+                                        ?>
                                     </div>
                                 </div>
                             <?php endforeach;

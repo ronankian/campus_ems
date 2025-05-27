@@ -1,24 +1,64 @@
 <style>
+    :root {
+        --primary: #784ba0;
+        --gradient-start: #ff3cac;
+        --gradient-end: #38f9d7;
+        --surface-dark: #2b2d42;
+        --accent: #ffb347;
+        --text-main: #f0f0f0;
+        --text-dark: #2b2d42;
+    }
+
     .sidebar {
         min-width: 250px;
         max-width: 250px;
-        background: #fff;
-        border: 1px solid #eee;
+        background: rgba(43, 45, 66, 0.3) !important;
+        backdrop-filter: blur(10px);
+        color: #fff;
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: none;
+        box-shadow: none;
+        position: sticky;
+        top: 1rem;
     }
 
+    .sidebar .sidebar-header {
+        color: var(--primary) !important;
+        background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .sidebar .d-grid a {
+        color: #fff;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: background 0.2s, color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .sidebar .d-grid a i {
+        font-size: 1.25rem;
+        min-width: 24px;
+        text-align: center;
+        transition: color 0.2s;
+    }
+
+    .sidebar .d-grid a.active,
     .sidebar .d-grid a:hover,
-    .sidebar .d-grid a:focus,
-    .sidebar .d-grid a.active {
-        background: #6665ee !important;
-        /* Orange background */
+    .sidebar .d-grid a:focus {
+        background: linear-gradient(90deg, var(--gradient-start) 0%, var(--gradient-end) 100%) !important;
         color: #fff !important;
-        /* White text */
         font-weight: bold !important;
-        /* Bold text */
-        border-radius: 6px;
-        /* Optional: rounded corners for a nice effect */
+    }
+
+    .sidebar .d-grid a.active i,
+    .sidebar .d-grid a:hover i,
+    .sidebar .d-grid a:focus i {
+        color: #fff;
     }
 </style>
 
@@ -26,25 +66,25 @@
 
 <!-- Sidebar -->
 <div class="col-md-4 col-lg-3">
-    <div class="sidebar rounded shadow position-sticky" style="font-weight: 500; top: 2rem;">
-        <h5 class="fw-bold p-2 text-black text-center w-100 border-bottom">
-            Attendee Dashboard
+    <div class="sidebar rounded shadow">
+        <h5 class="sidebar-header fw-bold p-3 text-white w-100 border-bottom fs-4">
+            <i class="fa fa-user mx-2"></i> Attendee
         </h5>
         <div class="d-grid gap-2 p-3 pt-0">
             <a href="dashboard.php"
-                class="d-flex align-items-center text-decoration-none text-black py-2 px-2 rounded hover-shadow<?php echo $current_page == 'dashboard.php' ? ' active' : ''; ?>">
+                class="d-flex align-items-center text-decoration-none text-white py-2 px-2 rounded hover-shadow<?php echo $current_page == 'dashboard.php' ? ' active' : ''; ?>">
                 <i class="fa fa-home me-2"></i> Overview
             </a>
             <a href="eventlists.php"
-                class="d-flex align-items-center text-decoration-none text-black py-2 px-2 rounded hover-shadow<?php echo $current_page == 'eventlists.php' ? ' active' : ''; ?>">
+                class="d-flex align-items-center text-decoration-none text-white py-2 px-2 rounded hover-shadow<?php echo $current_page == 'eventlists.php' ? ' active' : ''; ?>">
                 <i class="fa fa-list me-2"></i> Registrations
             </a>
             <a href="inbox.php"
-                class="d-flex align-items-center text-decoration-none text-black py-2 px-2 rounded hover-shadow<?php echo in_array($current_page, ['inbox.php', 'create.php', 'view-msg.php']) ? ' active' : ''; ?>">
+                class="d-flex align-items-center text-decoration-none text-white py-2 px-2 rounded hover-shadow<?php echo in_array($current_page, ['inbox.php', 'create.php', 'view-msg.php']) ? ' active' : ''; ?>">
                 <i class="fa fa-envelope me-2"></i> Inbox
             </a>
             <a href="account.php"
-                class="d-flex align-items-center text-decoration-none text-black py-2 px-2 rounded hover-shadow<?php echo $current_page == 'account.php' ? ' active' : ''; ?>">
+                class="d-flex align-items-center text-decoration-none text-white py-2 px-2 rounded hover-shadow<?php echo $current_page == 'account.php' ? ' active' : ''; ?>">
                 <i class="fa fa-user me-2"></i> Account
             </a>
         </div>

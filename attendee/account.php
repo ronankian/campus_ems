@@ -34,23 +34,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <style>
+        :root {
+            --primary: #784ba0;
+            --gradient-start: #ff3cac;
+            --gradient-end: #38f9d7;
+            --surface-dark: #2b2d42;
+            --accent: #ffb347;
+            --text-main: #f0f0f0;
+            --text-dark: #2b2d42;
+        }
+
         .dashboard-container {
             border-radius: 6px;
             backdrop-filter: blur(8px);
         }
 
-        .card-summary {
+        .account-details .card {
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-
-        .card-summary .icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .account-details .card {
-            box-shadow: 0 4px 32px rgba(0, 0, 0, 0.10) !important;
+            background: rgba(43, 45, 66, 0.3) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #fff !important;
+            border: none !important;
         }
 
         .account-details label.form-label {
@@ -125,9 +130,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                             $b = hexdec(substr($hash, 4, 2));
                             $circle_color = "rgb($r, $g, $b)";
                             $role = htmlspecialchars($user['role']);
-                            $badge_class = 'bg-secondary';
+                            $badge_class = 'bg-danger';
                             if ($role === 'admin')
-                                $badge_class = 'bg-danger';
+                                $badge_class = 'bg-info';
                             else if ($role === 'organizer')
                                 $badge_class = 'bg-primary';
                             else if ($role === 'attendee')
@@ -146,14 +151,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                                 <?php echo $initial; ?> </span>
                                         </div>
                                         <h2 class="fw-bold mb-2 text-center"
-                                            style="font-size: 2.4rem; letter-spacing: 1px; color: #222;">
+                                            style="font-size: 2.4rem; letter-spacing: 1px; color: #fff;">
                                             <?php echo htmlspecialchars($firstname . ' ' . $lastname); ?>
                                         </h2>
                                         <span class="badge <?php echo $badge_class; ?> mb-2"
                                             style="font-size:1.1em; min-width:90px; text-align:center; padding:0.6em 1.2em; border-radius:1em; letter-spacing:1px;">
                                             <?php echo ucfirst($role); ?> </span>
                                         <div class="mt-2 mb-1">
-                                            <div class="fs-6 text-muted">Member since
+                                            <div class="fs-6 text-white-50">Member since
                                                 <?php echo date('M d, Y', strtotime($user['created_at'])); ?>
                                             </div>
                                         </div>
@@ -162,7 +167,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                         <div class="row mb-4 w-100" style="max-width:700px;margin:0 auto;">
                                             <div class="col-md-6 col-12 mb-3 mb-md-0">
                                                 <label class="form-label fw-semibold text-muted">Username</label>
-                                                <div class="fs-5"><?php echo htmlspecialchars($user['username']); ?></div>
+                                                <div class="fs-5 text-white">
+                                                    <?php echo htmlspecialchars($user['username']); ?>
+                                                </div>
                                             </div>
                                             <div class="col-md-6 col-12 mb-3 mb-md-0 text-end">
                                                 <label class="form-label fw-semibold text-muted text-end w-100">Contact
@@ -175,12 +182,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                                     oninput="this.value=this.value.replace(/[^\d]/g,'').slice(0,11);">
                                             </div>
                                         </div>
-                                        <div class="row mb-4 w-100" style="max-width:700px;margin:0 auto;">
+                                        <div class="row mb-4 w-100 justify-content-between"
+                                            style="max-width:700px;margin:0 auto;">
                                             <div class="col-md-6 col-12 mb-3 mb-md-0">
                                                 <label class="form-label fw-semibold text-muted">Email Address</label>
-                                                <div class="fs-5"><?php echo htmlspecialchars($user['email']); ?></div>
+                                                <div class="fs-5 text-white"><?php echo htmlspecialchars($user['email']); ?>
+                                                </div>
                                             </div>
-                                            <div class="col-md-6 col-12 mb-3 mb-md-0 text-end">
+                                            <div class="col-md-4 col-12 mb-3 mb-md-0 text-end">
                                                 <label
                                                     class="form-label fw-semibold text-muted text-end w-100">Organization</label>
                                                 <?php include '../organizer/org.php'; ?>
@@ -213,9 +222,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                                                 <a href="../login/forgot-password.php"
                                                     class="btn btn-outline-primary px-4 py-2 fw-semibold rounded-pill">Change
                                                     Password</a>
-                                                <a href="create.php?request_organizer=1"
-                                                    class="btn btn-outline-warning px-4 py-2 fw-semibold rounded-pill">Request
-                                                    Organizer</a>
+                                                <?php if ($role === 'banned'): ?>
+                                                    <a href="create.php?request_organizer=1&subject_type=request&subject_custom=Request%20Unban"
+                                                        class="btn btn-outline-danger px-4 py-2 fw-semibold rounded-pill">Request
+                                                        Unban</a>
+                                                <?php else: ?>
+                                                    <a href="create.php?request_organizer=1"
+                                                        class="btn btn-outline-warning px-4 py-2 fw-semibold rounded-pill">Request
+                                                        Organizer</a>
+                                                <?php endif; ?>
                                             <?php endif; ?>
                                         </div>
                                     </form>

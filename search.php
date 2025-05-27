@@ -22,9 +22,17 @@ function getEventDate($row, $current_date)
 }
 $current_date = new DateTime();
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
-if ($keyword !== '') {
+$category = isset($_GET['category']) ? trim($_GET['category']) : '';
+if ($keyword !== '' && $category !== '') {
+    $safe_keyword = mysqli_real_escape_string($con, $keyword);
+    $safe_category = mysqli_real_escape_string($con, $category);
+    $query = "SELECT * FROM create_events WHERE event_title LIKE '%$safe_keyword%' AND category = '$safe_category' ORDER BY date_time DESC";
+} else if ($keyword !== '') {
     $safe_keyword = mysqli_real_escape_string($con, $keyword);
     $query = "SELECT * FROM create_events WHERE event_title LIKE '%$safe_keyword%' ORDER BY date_time DESC";
+} else if ($category !== '') {
+    $safe_category = mysqli_real_escape_string($con, $category);
+    $query = "SELECT * FROM create_events WHERE category = '$safe_category' ORDER BY date_time DESC";
 } else {
     $query = "SELECT * FROM create_events ORDER BY date_time DESC";
 }

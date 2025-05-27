@@ -11,16 +11,25 @@
 
 
     <style>
+        :root {
+            --primary: #784ba0;
+            --gradient-start: #ff3cac;
+            --gradient-end: #38f9d7;
+            --surface-dark: #2b2d42;
+            --accent: #ffb347;
+            --text-main: #f0f0f0;
+            --text-dark: #2b2d42;
+        }
+
         .footer {
-            background: linear-gradient(rgba(26, 34, 40, 1), rgba(0, 0, 0, 0.3));
+            background: rgba(43, 45, 66, 0.7) !important;
+            color: var(--text-main);
             margin-top: 5%;
             background-position: bottom;
-            background-color: black;
-            color: white;
         }
 
         .footer-logo-text {
-            background: linear-gradient(to bottom, rgb(223, 7, 7), rgb(223, 202, 15));
+            background: linear-gradient(135deg, #ff3cac 0%, #38f9d7 100%);
             background-clip: text;
             color: transparent;
         }
@@ -57,10 +66,7 @@
             <div class="row">
                 <!-- Brand/Description -->
                 <div class="col-md-4 mb-4 mb-md-0">
-                    <a href="/campus_ems/home.php" class="navbar-logo">
-                        <img src="/campus_ems/assets/images/calendar.png" width="32" height="32" alt="logo">
-                        <span class="footer-logo-text fw-bold fs-3">EventHub</span>
-                    </a>
+                    <span class="footer-logo-text fw-bold fs-3">EventHub</span>
                     <p class="mt-1 mb-3 text-white">
                         EventHub empowers the CvSU-CCAT community to seamlessly organize and manage campus events. Built
                         with Bootstrap, PHP, and MySQL, it delivers a modern and reliable event management experience.
@@ -102,7 +108,7 @@
                     </p>
                 </div>
             </div>
-            <hr class="my-4" style="border-color: #444;">
+            <hr class="my-4" style="border-color: #fff;">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
                 <p class="mb-2 mb-md-0">&copy; 2025 EventHub. All rights reserved.</p>
                 <div class="d-flex gap-2">
