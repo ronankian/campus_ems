@@ -291,7 +291,7 @@ session_start();
                 <div class="position-sticky" style="top: 20px;">
                     <?php
                     if ($status === 'cancelled' || $status === 'ended') {
-                        echo '<a href="events.php" class="btn btn-primary btn-lg mt-2" style="font-weight: bold; letter-spacing: 1px; width: 100%;">
+                        echo '<a href="events.php" class="btn btn-outline-primary btn-lg mt-2" style="font-weight: bold; letter-spacing: 1px; width: 100%;">
                             <i class="fa fa-calendar-days me-2"></i> Other Events
                         </a>';
                     } else {

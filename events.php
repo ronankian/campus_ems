@@ -264,6 +264,11 @@ $result = mysqli_query($con, $query);
             color: #fff;
             border-color: transparent;
         }
+
+        .modal-content {
+            background: var(--surface-dark) !important;
+            backdrop-filter: blur(10px) !important;
+        }
     </style>
 </head>
 
@@ -397,9 +402,9 @@ $result = mysqli_query($con, $query);
                     <div class="modal fade" id="orgModal" tabindex="-1" aria-labelledby="orgModalLabel"
                         aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content text-black">
+                            <div class="modal-content text-white">
                                 <div class="modal-body text-center p-4">
-                                    <h5 class="mb-3  text-black">You do not have an organization yet.</h5>
+                                    <h5 class="mb-3  text-white">You do not have an organization yet.</h5>
                                     <div class="mb-2">
                                         <div class="spinner-border text-success" role="status">
                                             <span class="visually-hidden">Loading...</span>
