@@ -156,6 +156,9 @@ session_start();
                                 $status = $event['status'] ?? 'active';
                                 if ($status === 'cancelled') {
                                     echo '<span class="badge bg-danger">Cancelled</span>';
+                                    if (!empty($event['reason'])) {
+                                        echo '<div class="mt-2 text-center"><span class="fw-semibold text-danger" style="display:block;">Reason: ' . nl2br(htmlspecialchars($event['reason'])) . '</span></div>';
+                                    }
                                 } else if ($status === 'ended') {
                                     echo '<span class="badge bg-secondary">Ended</span>';
                                 } else {
@@ -285,7 +288,7 @@ session_start();
 
             <!-- Sidebar -->
             <div class="col-md-4 mb-4 ps-5">
-                <div class="position-sticky" style="top: 50px;">
+                <div class="position-sticky" style="top: 20px;">
                     <?php
                     if ($status === 'cancelled' || $status === 'ended') {
                         echo '<a href="events.php" class="btn btn-primary btn-lg mt-2" style="font-weight: bold; letter-spacing: 1px; width: 100%;">

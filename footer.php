@@ -51,10 +51,6 @@
             border-color: #6610f2;
             color: #fff;
         }
-
-        .head-text {
-            color: rgb(228, 138, 20);
-        }
     </style>
 
 </head>

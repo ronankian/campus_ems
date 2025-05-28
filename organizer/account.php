@@ -129,9 +129,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['about_me']) || isset
                             if ($role === 'admin')
                                 $badge_class = 'bg-danger';
                             else if ($role === 'organizer')
-                                $badge_class = 'bg-warning';
-                            else if ($role === 'attendee')
                                 $badge_class = 'bg-success';
+                            else if ($role === 'attendee')
+                                $badge_class = 'bg-primary';
                             // Before including org.php, set a variable for the selected value
                             $selected_organization = $user['organization'] ?? '';
                             ?>

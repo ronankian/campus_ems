@@ -214,17 +214,27 @@ session_start();
     <div class="modal fade" tabindex="-1" role="dialog" id="cancelEventModal">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content rounded-3 shadow">
-                <div class="modal-body p-4 text-center text-white">
-                    <h5 class="mb-2">Cancel Event</h5>
-                    <p class="mb-0">Are you sure you want to cancel this event?</p>
-                </div>
-                <div class="modal-footer flex-nowrap p-0">
-                    <button type="button"
-                        class="btn btn-lg btn-link fs-6 text-decoration-none text-danger col-6 py-3 m-0 rounded-0 border-end"
-                        id="confirmCancelBtn"><strong>Yes, cancel</strong></button>
-                    <button type="button" class="btn btn-lg btn-link fs-6 text-decoration-none col-6 py-3 m-0 rounded-0"
-                        data-bs-dismiss="modal">No thanks</button>
-                </div>
+                <form id="cancelEventForm">
+                    <div class="modal-body p-4 text-center text-white">
+                        <h5 class="mb-2">Cancel Event</h5>
+                        <p class="mb-0">Are you sure you want to cancel this event?</p>
+                        <div class="mb-3 mt-3 text-start">
+                            <label for="cancelReason" class="form-label text-white">Reason for cancelling <span
+                                    class="text-danger">*</span></label>
+                            <textarea class="form-control" id="cancelReason" name="reason" rows="4" maxlength="2500"
+                                required placeholder="Please provide your reason"></textarea>
+                            <div class="form-text text-white-50">Maximum 500 words.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer flex-nowrap p-0">
+                        <button type="submit"
+                            class="btn btn-lg btn-link fs-6 text-decoration-none text-danger col-6 py-3 m-0 rounded-0 border-end"
+                            id="confirmCancelBtn"><strong>Yes, cancel</strong></button>
+                        <button type="button"
+                            class="btn btn-lg btn-link fs-6 text-decoration-none col-6 py-3 m-0 rounded-0"
+                            data-bs-dismiss="modal">No thanks</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -255,17 +265,27 @@ session_start();
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            var confirmBtn = document.getElementById('confirmCancelBtn');
-            if (confirmBtn) {
-                confirmBtn.addEventListener('click', function () {
+            var cancelForm = document.getElementById('cancelEventForm');
+            if (cancelForm) {
+                cancelForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const reason = document.getElementById('cancelReason').value.trim();
+                    // Word count check
+                    if (reason.split(/\s+/).length > 500) {
+                        alert('Reason must not exceed 500 words.');
+                        return;
+                    }
+                    if (!reason) {
+                        alert('Reason is required.');
+                        return;
+                    }
                     if (eventIdToCancel) {
-                        // Send AJAX request to update status
                         fetch('cancel_event.php', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',
                             },
-                            body: 'event_id=' + eventIdToCancel
+                            body: 'event_id=' + encodeURIComponent(eventIdToCancel) + '&reason=' + encodeURIComponent(reason)
                         })
                             .then(response => response.json())
                             .then(data => {

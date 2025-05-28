@@ -49,6 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $contact = mysqli_real_escape_string($con, $_POST['contact']);
     $other_contact = isset($_POST['other_contact']) ? mysqli_real_escape_string($con, $_POST['other_contact']) : '';
     $related_links = isset($_POST['related_links']) ? json_encode(array_filter($_POST['related_links'])) : null;
+    $terms_accepted = isset($_POST['terms_accepted']) ? 1 : 0;
+    $reason = ''; // Default value if not used in the form
 
     // File upload (single file, max 1)
     $attach_files = [];
@@ -98,9 +100,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mysqli_stmt_close($stmt);
         } else {
             // Insert event
-            $query = "INSERT INTO create_events (event_title, event_description, date_time, ending_time, location, category, contact, other_contact, related_links, attach_file, fullname) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+            $query = "INSERT INTO create_events (event_title, event_description, date_time, ending_time, location, category, contact, other_contact, related_links, attach_file, fullname, user_id, terms_accepted) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
             $stmt = mysqli_prepare($con, $query);
-            mysqli_stmt_bind_param($stmt, 'sssssssssssii', $event_title, $event_description, $date_time, $ending_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname);
+            if (!$stmt) {
+                die('Prepare failed: ' . mysqli_error($con));
+            }
+            mysqli_stmt_bind_param($stmt, 'ssssssssssssi', $event_title, $event_description, $date_time, $ending_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $user_id, $terms_accepted);
             if (mysqli_stmt_execute($stmt)) {
                 $success = true;
             } else {
