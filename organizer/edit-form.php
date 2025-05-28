@@ -87,20 +87,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         if ($edit_mode) {
             // Update event
-            $query = "UPDATE create_events SET event_title=?, event_description=?, date_time=?, ending_time=?, location=?, category=?, contact=?, other_contact=?, related_links=?, attach_file=?, fullname=?, organization=?, user_id=?, updated_at=NOW() WHERE id=?";
+            $query = "UPDATE create_events SET event_title=?, event_description=?, date_time=?, ending_time=?, location=?, category=?, contact=?, other_contact=?, related_links=?, attach_file=?, fullname=?, user_id=?, updated_at=NOW() WHERE id=?";
             $stmt = mysqli_prepare($con, $query);
-            mysqli_stmt_bind_param($stmt, 'sssssssssssiii', $event_title, $event_description, $date_time, $ending_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $org_name, $user_id, $event_id);
-            if (mysqli_stmt_execute($stmt)) {
-                $success = true;
+            if (!$stmt) {
+                $errors[] = 'Prepare failed: ' . mysqli_error($con);
             } else {
-                $errors[] = 'Database error: ' . mysqli_error($con);
+                mysqli_stmt_bind_param($stmt, 'sssssssssssii', $event_title, $event_description, $date_time, $ending_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $user_id, $event_id);
+                if (mysqli_stmt_execute($stmt)) {
+                    $success = true;
+                } else {
+                    $errors[] = 'Database error: ' . mysqli_error($con);
+                }
+                mysqli_stmt_close($stmt);
             }
-            mysqli_stmt_close($stmt);
         } else {
             // Insert event
-            $query = "INSERT INTO create_events (event_title, event_description, date_time, ending_time, location, category, contact, other_contact, related_links, attach_file, fullname, organization, user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            $query = "INSERT INTO create_events (event_title, event_description, date_time, ending_time, location, category, contact, other_contact, related_links, attach_file, fullname, user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
             $stmt = mysqli_prepare($con, $query);
-            mysqli_stmt_bind_param($stmt, 'ssssssssssssi', $event_title, $event_description, $date_time, $ending_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $org_name, $user_id);
+            mysqli_stmt_bind_param($stmt, 'sssssssssssi', $event_title, $event_description, $date_time, $ending_time, $location, $category, $contact, $other_contact, $related_links, $attach_files_json, $fullname, $user_id);
             if (mysqli_stmt_execute($stmt)) {
                 $success = true;
             } else {
