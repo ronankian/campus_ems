@@ -53,7 +53,7 @@ if ($user_id) {
 $upcoming_events = [];
 if ($user_id) {
     $now = date('Y-m-d H:i:s');
-    $upcoming_query = mysqli_query($con, "SELECT e.* FROM registers r JOIN create_events e ON r.event_id = e.id WHERE r.user_id = '$user_id' AND e.date_time > '$now' ORDER BY e.date_time ASC LIMIT 3");
+    $upcoming_query = mysqli_query($con, "SELECT e.* FROM registers r JOIN create_events e ON r.event_id = e.id WHERE r.user_id = '$user_id' AND (e.status = 'active' OR e.status = 'ongoing' OR e.status IS NULL) AND e.date_time > '$now' ORDER BY e.date_time ASC LIMIT 3");
     while ($row = mysqli_fetch_assoc($upcoming_query)) {
         $upcoming_events[] = $row;
     }
@@ -326,10 +326,10 @@ if ($user_id) {
                 <div class="row g-3">
                     <div class="col-md-12">
                         <div class="card card-summary shadow border-0 p-4">
-                            <div class="col-md-12 d-flex mb-4 justify-content-between align-items-end border-bottom">
+                            <div class="col-md-12 d-flex mb-2 justify-content-between align-items-end border-bottom">
                                 <h5 class="fw-bold mb-3"> Upcoming Event</h5>
                                 <a href="events.php"
-                                    class="btn btn-link fs-5 text-decoration-none text-white fw-bold d-flex align-items-center">
+                                    class="btn btn-link mb-1 fs-5 text-decoration-none text-white fw-bold d-flex align-items-center">
                                     View all
                                     <i class="fa fa-caret-right ms-2"></i>
                                 </a>
@@ -351,7 +351,10 @@ if ($user_id) {
                                         }
                                     }
                                     $event_title = htmlspecialchars($row['event_title']);
-                                    $badge = ($status === 'cancelled') ? '<span class="badge text-bg-danger">Cancelled</span>' : (($status === 'ended') ? '<span class="badge text-bg-secondary">Ended</span>' : '<span class="badge text-bg-success">Active</span>');
+                                    $badge = ($status === 'cancelled') ? '<span class="badge text-bg-danger">Cancelled</span>' :
+                                        (($status === 'ended') ? '<span class="badge text-bg-secondary">Ended</span>' :
+                                            (($status === 'ongoing') ? '<span class="badge text-bg-primary">Ongoing</span>' :
+                                                '<span class="badge text-bg-success">Active</span>'));
                                     $date_str = '';
                                     if ($status === 'cancelled' && !empty($row['date_cancelled'])) {
                                         $date_str = 'Cancelled: ' . date('F d, Y | h:i A', strtotime($row['date_cancelled']));
@@ -362,17 +365,18 @@ if ($user_id) {
                                         }
                                     }
                                     ?>
-                                    <div class="row g-0 my-4 event-row-item"
+                                    <div class="row g-0 my-2 event-row-item"
                                         style="border-radius: 16px; overflow: hidden; position: relative; height: 250px;">
                                         <a href="../event-details.php?id=<?php echo $row['id']; ?>"
-                                            style="display:block; width:100%; height:100%; position:relative;">
+                                            style="display:block; width:100%; height:100%; position:relative; text-decoration:none;">
                                             <?php if ($img): ?>
                                                 <img src="/campus_ems/<?php echo htmlspecialchars($img); ?>" alt="Event image"
                                                     style="width:100%; height:100%; object-fit:cover; display:block;">
                                             <?php else: ?>
                                                 <div
                                                     style="width:100%; height:100%; background:#888; display:flex; align-items:center; justify-content:center;">
-                                                    <span class="no-image-watermark pb-5">No Image Found</span>
+                                                    <span class="no-image-watermark text-white-50 fw-semibold fs-4 pb-5">No
+                                                        Image Found</span>
                                                 </div>
                                             <?php endif; ?>
                                             <div

@@ -104,117 +104,178 @@ session_start();
             ?>
             <div class="col-md-8 mx-auto">
                 <?php if ($event): ?>
-                    <div class="card p-3" style="border:1px solid #444; background: transparent;">
-                        <!-- Image -->
-                        <div class="mb-1"
-                            style="width:100%; height:250px; background:#888; border-radius:4px; overflow:hidden; display:flex; align-items:center; justify-content:center; position:relative;">
-                            <?php
-                            $img = null;
-                            if (!empty($event['attach_file'])) {
-                                $files = json_decode($event['attach_file'], true);
-                                if (is_array($files) && count($files) > 0) {
-                                    foreach ($files as $file) {
-                                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                                        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-                                            $img = 'uploads/' . $file;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            if ($img): ?>
-                                <img src="<?php echo htmlspecialchars($img); ?>" alt="Event image"
-                                    style="width:100%; height:100%; object-fit:cover;">
-                            <?php else: ?>
-                                <span class="no-image-watermark"
-                                    style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;opacity:0.5;font-size:1.3rem;font-weight:bold;text-align:center;pointer-events:none;user-select:none;">No
-                                    Image Found</span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="d-flex justify-content-between mb-5 border-bottom">
-                            <div>
-                                <small>Category</small><br><span
-                                    class="fw-semibold fs-5 text-white"><?php echo htmlspecialchars($event['category'] ?? ''); ?></span>
-                            </div>
-                            <div class="text-end">
+                        <div class="card p-3" style="border:1px solid #444; background: transparent;">
+                            <!-- Image -->
+                            <div class="mb-1"
+                                style="width:100%; height:250px; background:#888; border-radius:4px; overflow:hidden; display:flex; align-items:center; justify-content:center; position:relative;">
                                 <?php
-                                if (!empty($event['date_cancelled'])) {
-                                    echo '<small>Cancelled at</small><br><span class="fw-semibold fs-5 text-white">' . date('F d, Y \| h:i A', strtotime($event['date_cancelled'])) . '</span>';
-                                } elseif (!empty($event['updated_at']) && $event['updated_at'] !== $event['created_at']) {
-                                    echo '<small>Updated at</small><br><span class="fw-semibold fs-5 text-white">' . date('F d, Y \| h:i A', strtotime($event['updated_at'])) . '</span>';
-                                } else {
-                                    echo '<small>Created at</small><br><span class="fw-semibold fs-5 text-white">' . date('F d, Y \| h:i A', strtotime($event['created_at'])) . '</span>';
-                                }
-                                ?>
-                            </div>
-                        </div>
-                        <div class="text-center mb-2">
-                            <h2 class="mb-2 text-white fw-bold"><?php echo htmlspecialchars($event['event_title']); ?>
-                            </h2>
-                            <div class="mb-3">
-                                <?php
-                                $status = $event['status'] ?? 'active';
-                                if ($status === 'cancelled') {
-                                    echo '<span class="badge bg-danger">Cancelled</span>';
-                                    if (!empty($event['reason'])) {
-                                        echo '<div class="mt-2 text-center"><span class="fw-semibold text-danger" style="display:block;">Reason: ' . nl2br(htmlspecialchars($event['reason'])) . '</span></div>';
-                                    }
-                                } else if ($status === 'ended') {
-                                    echo '<span class="badge bg-secondary">Ended</span>';
-                                } else {
-                                    echo '<span class="badge bg-success">Active</span>';
-                                }
-                                ?>
-                            </div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-6 text-white">
-                                <div><small>Event Starts at</small><br>
-                                    <span>
-                                        <?php
-                                        if ($status === 'cancelled' && !empty($event['date_cancelled'])) {
-                                            echo '<span class="fw-semibold">' . date('F d, Y \| h:i A', strtotime($event['date_cancelled'])) . '</span>';
-                                        } else {
-                                            echo '<span class="fw-semibold">' . date('F d, Y \| h:i A', strtotime($event['date_time'])) . '</span>';
-                                        }
-                                        ?>
-                                    </span>
-                                </div>
-                                <div class="mt-2"><small>Event Ends at</small><br>
-                                    <span>
-                                        <?php
-                                        if (!empty($event['ending_time'])) {
-                                            echo '<span class="fw-semibold">' . date('F d, Y \| h:i A', strtotime($event['ending_time'])) . '</span>';
-                                        } else {
-                                            echo '<span class="fw-semibold text-muted">N/A</span>';
-                                        }
-                                        ?>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="col-6 text-end text-white">
-                                <div class="mb-2">
-                                    <small>Location</small><br><span
-                                        class="fw-semibold"><?php echo htmlspecialchars($event['location'] ?? ''); ?></span>
-                                </div>
-                                <div>
-                                    <small>Contacts</small>
-                                    <?php
-                                    if (!empty($event['contact'])) {
-                                        $contacts = preg_split('/[\r\n,]+/', $event['contact']);
-                                        foreach ($contacts as $contact) {
-                                            $contact = trim($contact);
-                                            if ($contact) {
-                                                echo '<div class="fw-semibold">' . htmlspecialchars($contact) . '</div>';
+                                $img = null;
+                                if (!empty($event['attach_file'])) {
+                                    $files = json_decode($event['attach_file'], true);
+                                    if (is_array($files) && count($files) > 0) {
+                                        foreach ($files as $file) {
+                                            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                                            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                                                $img = 'uploads/' . $file;
+                                                break;
                                             }
                                         }
                                     }
-                                    if (!empty($event['other_contact'])) {
-                                        $other_contacts = preg_split('/[\r\n,]+/', $event['other_contact']);
-                                        foreach ($other_contacts as $other) {
-                                            $other = trim($other);
-                                            if ($other) {
-                                                echo '<div class="fw-semibold>' . htmlspecialchars($other) . '</div>';
+                                }
+                                if ($img): ?>
+                                        <img src="<?php echo htmlspecialchars($img); ?>" alt="Event image"
+                                            style="width:100%; height:100%; object-fit:cover;">
+                                <?php else: ?>
+                                        <span class="no-image-watermark"
+                                            style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;opacity:0.5;font-size:1.3rem;font-weight:bold;text-align:center;pointer-events:none;user-select:none;">No
+                                            Image Found</span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="d-flex justify-content-between mb-5 border-bottom">
+                                <div>
+                                    <small>Category</small><br><span
+                                        class="fw-semibold fs-5 text-white"><?php echo htmlspecialchars($event['category'] ?? ''); ?></span>
+                                </div>
+                                <div class="text-end">
+                                    <?php
+                                    if (!empty($event['date_cancelled'])) {
+                                        echo '<small>Cancelled at</small><br><span class="fw-semibold fs-5 text-white">' . date('F d, Y \| h:i A', strtotime($event['date_cancelled'])) . '</span>';
+                                    } elseif (!empty($event['updated_at']) && $event['updated_at'] !== $event['created_at']) {
+                                        echo '<small>Updated at</small><br><span class="fw-semibold fs-5 text-white">' . date('F d, Y \| h:i A', strtotime($event['updated_at'])) . '</span>';
+                                    } else {
+                                        echo '<small>Created at</small><br><span class="fw-semibold fs-5 text-white">' . date('F d, Y \| h:i A', strtotime($event['created_at'])) . '</span>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="text-center mb-2">
+                                <h2 class="mb-2 text-white fw-bold"><?php echo htmlspecialchars($event['event_title']); ?>
+                                </h2>
+                                <div class="mb-3">
+                                    <?php
+                                    $status = $event['status'] ?? 'active';
+                                    if ($status === 'cancelled') {
+                                        echo '<span class="badge bg-danger">Cancelled</span>';
+                                        if (!empty($event['reason'])) {
+                                            echo '<div class="mt-2 text-center"><span class="fw-semibold text-danger" style="display:block;">Reason: ' . nl2br(htmlspecialchars($event['reason'])) . '</span></div>';
+                                        }
+                                    } else if ($status === 'ended') {
+                                        echo '<span class="badge bg-secondary">Ended</span>';
+                                    } else if ($status === 'ongoing') {
+                                        echo '<span class="badge bg-primary">Ongoing</span>';
+                                    } else {
+                                        echo '<span class="badge bg-success">Active</span>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6 text-white">
+                                    <div><small>Event Starts at</small><br>
+                                        <span>
+                                            <?php
+                                            if ($status === 'cancelled' && !empty($event['date_cancelled'])) {
+                                                echo '<span class="fw-semibold">' . date('F d, Y \| h:i A', strtotime($event['date_cancelled'])) . '</span>';
+                                            } else {
+                                                echo '<span class="fw-semibold">' . date('F d, Y \| h:i A', strtotime($event['date_time'])) . '</span>';
+                                            }
+                                            ?>
+                                        </span>
+                                    </div>
+                                    <div class="mt-2"><small>Event Ends at</small><br>
+                                        <span>
+                                            <?php
+                                            if (!empty($event['ending_time'])) {
+                                                echo '<span class="fw-semibold">' . date('F d, Y \| h:i A', strtotime($event['ending_time'])) . '</span>';
+                                            } else {
+                                                echo '<span class="fw-semibold text-muted">N/A</span>';
+                                            }
+                                            ?>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-end text-white">
+                                    <div class="mb-2">
+                                        <small>Location</small><br><span
+                                            class="fw-semibold"><?php echo htmlspecialchars($event['location'] ?? ''); ?></span>
+                                    </div>
+                                    <div>
+                                        <small>Contacts</small>
+                                        <?php
+                                        if (!empty($event['contact'])) {
+                                            $contacts = preg_split('/[\r\n,]+/', $event['contact']);
+                                            foreach ($contacts as $contact) {
+                                                $contact = trim($contact);
+                                                if ($contact) {
+                                                    echo '<div class="fw-semibold">' . htmlspecialchars($contact) . '</div>';
+                                                }
+                                            }
+                                        }
+                                        if (!empty($event['other_contact'])) {
+                                            $other_contacts = preg_split('/[\r\n,]+/', $event['other_contact']);
+                                            foreach ($other_contacts as $other) {
+                                                $other = trim($other);
+                                                if ($other) {
+                                                    echo '<div class="fw-semibold>' . htmlspecialchars($other) . '</div>';
+                                                }
+                                            }
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3 mt-3">
+                                <label class="mb-1">
+                                    <small>Event Description</small>
+                                </label>
+                                <div
+                                    style="min-height:120px; padding:8px; background: transparent; color: #fff; text-indent: 50px;">
+                                    <?php echo nl2br(htmlspecialchars($event['event_description'] ?? '')); ?>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label>
+                                    <h5>Organizer</h5>
+                                </label>
+                                <div class="mb-2"
+                                    style="padding:4px 8px; border-radius:3px; background: transparent; color: #fff;">
+                                    <?php
+                                    $organizer_name = $event['fullname'] ?? '';
+                                    if ($organizer_name) {
+                                        echo htmlspecialchars($organizer_name);
+                                        if ($organizer_org) {
+                                            echo ' (' . htmlspecialchars($organizer_org) . ')';
+                                        }
+                                    } else {
+                                        echo '<span class="text-muted">N/A</span>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label>
+                                    <h5>Related Links</h5>
+                                </label>
+                                <div class="mb-2"
+                                    style="padding:4px 8px; border-radius:3px; background: transparent; color: #fff;">
+                                    <?php
+                                    if (!empty($event['related_links'])) {
+                                        $links = json_decode($event['related_links'], true);
+                                        if (is_array($links)) {
+                                            foreach ($links as $link) {
+                                                $link = trim($link);
+                                                if (filter_var($link, FILTER_VALIDATE_URL)) {
+                                                    echo '<div><a href="' . htmlspecialchars($link) . '" target="_blank" rel="noopener noreferrer" style="color:#4fc3f7;word-break:break-all;">' . htmlspecialchars($link) . '</a></div>';
+                                                } else {
+                                                    echo '<div>' . htmlspecialchars($link) . '</div>';
+                                                }
+                                            }
+                                        } else {
+                                            $link = trim($event['related_links']);
+                                            if (filter_var($link, FILTER_VALIDATE_URL)) {
+                                                echo '<div><a href="' . htmlspecialchars($link) . '" target="_blank" rel="noopener noreferrer" style="color:#4fc3f7;word-break:break-all;">' . htmlspecialchars($link) . '</a></div>';
+                                            } else {
+                                                echo htmlspecialchars($event['related_links']);
                                             }
                                         }
                                     }
@@ -222,67 +283,8 @@ session_start();
                                 </div>
                             </div>
                         </div>
-                        <div class="mb-3 mt-3">
-                            <label class="mb-1">
-                                <small>Event Description</small>
-                            </label>
-                            <div
-                                style="min-height:120px; padding:8px; background: transparent; color: #fff; text-indent: 50px;">
-                                <?php echo nl2br(htmlspecialchars($event['event_description'] ?? '')); ?>
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <label>
-                                <h5>Organizer</h5>
-                            </label>
-                            <div class="mb-2"
-                                style="padding:4px 8px; border-radius:3px; background: transparent; color: #fff;">
-                                <?php
-                                $organizer_name = $event['fullname'] ?? '';
-                                if ($organizer_name) {
-                                    echo htmlspecialchars($organizer_name);
-                                    if ($organizer_org) {
-                                        echo ' (' . htmlspecialchars($organizer_org) . ')';
-                                    }
-                                } else {
-                                    echo '<span class="text-muted">N/A</span>';
-                                }
-                                ?>
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <label>
-                                <h5>Related Links</h5>
-                            </label>
-                            <div class="mb-2"
-                                style="padding:4px 8px; border-radius:3px; background: transparent; color: #fff;">
-                                <?php
-                                if (!empty($event['related_links'])) {
-                                    $links = json_decode($event['related_links'], true);
-                                    if (is_array($links)) {
-                                        foreach ($links as $link) {
-                                            $link = trim($link);
-                                            if (filter_var($link, FILTER_VALIDATE_URL)) {
-                                                echo '<div><a href="' . htmlspecialchars($link) . '" target="_blank" rel="noopener noreferrer" style="color:#4fc3f7;word-break:break-all;">' . htmlspecialchars($link) . '</a></div>';
-                                            } else {
-                                                echo '<div>' . htmlspecialchars($link) . '</div>';
-                                            }
-                                        }
-                                    } else {
-                                        $link = trim($event['related_links']);
-                                        if (filter_var($link, FILTER_VALIDATE_URL)) {
-                                            echo '<div><a href="' . htmlspecialchars($link) . '" target="_blank" rel="noopener noreferrer" style="color:#4fc3f7;word-break:break-all;">' . htmlspecialchars($link) . '</a></div>';
-                                        } else {
-                                            echo htmlspecialchars($event['related_links']);
-                                        }
-                                    }
-                                }
-                                ?>
-                            </div>
-                        </div>
-                    </div>
                 <?php else: ?>
-                    <div class="alert alert-danger mt-5">Event not found.</div>
+                        <div class="alert alert-danger mt-5">Event not found.</div>
                 <?php endif; ?>
             </div>
 
@@ -290,7 +292,7 @@ session_start();
             <div class="col-md-4 mb-4 ps-5">
                 <div class="position-sticky" style="top: 20px;">
                     <?php
-                    if ($status === 'cancelled' || $status === 'ended') {
+                    if ($status === 'cancelled' || $status === 'ended' || $status === 'ongoing') {
                         echo '<a href="events.php" class="btn btn-outline-primary btn-lg mt-2" style="font-weight: bold; letter-spacing: 1px; width: 100%;">
                             <i class="fa fa-calendar-days me-2"></i> Other Events
                         </a>';

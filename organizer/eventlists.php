@@ -99,9 +99,9 @@ session_start();
                                 WHEN status = 'cancelled' THEN 2
                                 ELSE 3
                             END AS status_order
-                            FROM create_events 
+                            FROM create_events e
                             WHERE user_id = '" . $_SESSION['user_id'] . "' 
-                            ORDER BY status_order ASC, date_time DESC";
+                            ORDER BY e.created_at DESC";
                         $result = mysqli_query($con, $query);
 
                         // Add status column if it doesn't exist
@@ -158,6 +158,10 @@ session_start();
                                                         $status_badge = '<span class="badge bg-secondary">Ended</span>';
                                                         $status_time = !empty($row['updated_at']) && $row['updated_at'] !== $row['created_at'] ? date('M d, Y | h:i A', strtotime($row['updated_at'])) : date('M d, Y | h:i A', strtotime($row['created_at']));
                                                         $status_time_label = (!empty($row['updated_at']) && $row['updated_at'] !== $row['created_at']) ? 'Updated at' : 'Created at';
+                                                    } elseif (isset($row['status']) && $row['status'] === 'ongoing') {
+                                                        $status_badge = '<span class="badge bg-primary">Ongoing</span>';
+                                                        $status_time = !empty($row['updated_at']) && $row['updated_at'] !== $row['created_at'] ? date('M d, Y | h:i A', strtotime($row['updated_at'])) : date('M d, Y | h:i A', strtotime($row['created_at']));
+                                                        $status_time_label = (!empty($row['updated_at']) && $row['updated_at'] !== $row['created_at']) ? 'Updated at' : 'Created at';
                                                     } else {
                                                         $status_badge = '<span class="badge bg-success">Active</span>';
                                                         $status_time = !empty($row['updated_at']) && $row['updated_at'] !== $row['created_at'] ? date('M d, Y | h:i A', strtotime($row['updated_at'])) : date('M d, Y | h:i A', strtotime($row['created_at']));
@@ -185,7 +189,7 @@ session_start();
                                                             <a href="/campus_ems/event-details.php?id=<?php echo $row['id']; ?>"
                                                                 class="btn btn-sm btn-primary m-1" title="View Details"><i
                                                                     class="fa fa-eye"></i></a>
-                                                            <?php if (isset($row['status']) && $row['status'] === 'active'): ?>
+                                                            <?php if (isset($row['status']) && ($row['status'] === 'active' || $row['status'] === 'ongoing')): ?>
                                                                 <a href="edit-form.php?id=<?php echo $row['id']; ?>"
                                                                     class="btn btn-sm btn-warning m-1" title="Edit"><i
                                                                         class="fa fa-pen-to-square"></i></a>

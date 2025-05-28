@@ -301,12 +301,16 @@ $result = mysqli_query($con, $query);
                         $badge = '<span class="badge text-bg-danger">Cancelled</span>';
                     } else if ($status === 'ended') {
                         $badge = '<span class="badge text-bg-secondary">Ended</span>';
+                    } else if ($status === 'ongoing') {
+                        $badge = '<span class="badge text-bg-primary">Ongoing</span>';
                     } else {
                         $badge = '<span class="badge text-bg-success">Active</span>';
                     }
                     $date_str = '';
                     if ($status === 'cancelled' && !empty($row['date_cancelled'])) {
                         $date_str = 'Cancelled: ' . date('F d, Y | h:i A', strtotime($row['date_cancelled']));
+                    } else if ($status === 'ongoing' && !empty($row['date_time']) && !empty($row['ending_time'])) {
+                        $date_str = date('F d, Y | h:i A', strtotime($row['date_time'])) . ' - ' . date('F d, Y | h:i A', strtotime($row['ending_time']));
                     } else {
                         $date_str = date('F d, Y | h:i A', strtotime($row['date_time']));
                         if (!empty($row['ending_time'])) {

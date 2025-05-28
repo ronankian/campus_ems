@@ -5,6 +5,7 @@ $con = mysqli_connect('localhost', 'root', '', 'campus_ems');
 if (!$con) {
     die('Database connection failed: ' . mysqli_connect_error());
 }
+
 // Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['msg_id'], $_POST['new_status'])) {
     $msg_id = intval($_POST['msg_id']);
@@ -16,6 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['msg_id'], $_POST['new
         exit;
     }
 }
+
+// Handle delete registration
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_reg_id'])) {
+    $delete_id = intval($_POST['delete_reg_id']);
+    mysqli_query($con, "DELETE FROM registers WHERE id = $delete_id");
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
 // Fetch all registrations with event and user info
 $query = "SELECT r.*, e.event_title, e.status as event_status, u.username, u.organization, u.role FROM registers r LEFT JOIN create_events e ON r.event_id = e.id LEFT JOIN usertable u ON r.user_id = u.id ORDER BY r.registration_date DESC";
 $result = mysqli_query($con, $query);
@@ -202,11 +212,3 @@ $result = mysqli_query($con, $query);
 </body>
 
 </html>
-
-// Handle delete registration
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_reg_id'])) {
-$delete_id = intval($_POST['delete_reg_id']);
-mysqli_query($con, "DELETE FROM registers WHERE id = $delete_id");
-header('Location: ' . $_SERVER['PHP_SELF']);
-exit;
-}

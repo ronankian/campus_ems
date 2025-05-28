@@ -5,6 +5,7 @@ $con = mysqli_connect('localhost', 'root', '', 'campus_ems');
 if (!$con) {
     die('Database connection failed: ' . mysqli_connect_error());
 }
+
 // Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['msg_id'], $_POST['new_status'])) {
     $msg_id = intval($_POST['msg_id']);
@@ -16,6 +17,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['msg_id'], $_POST['new
         exit;
     }
 }
+
+// Handle cancel and delete actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['cancel_event_id'])) {
+        $cancel_id = intval($_POST['cancel_event_id']);
+        $now = date('Y-m-d H:i:s');
+        mysqli_query($con, "UPDATE create_events SET status = 'cancelled', date_cancelled = '$now' WHERE id = $cancel_id");
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
+    }
+    if (isset($_POST['delete_event_id'])) {
+        $delete_id = intval($_POST['delete_event_id']);
+
+        // First, get the event details to handle attachments
+        $event_query = "SELECT attach_file FROM create_events WHERE id = $delete_id";
+        $event_result = mysqli_query($con, $event_query);
+        if ($event_row = mysqli_fetch_assoc($event_result)) {
+            // Delete attached files if they exist
+            if (!empty($event_row['attach_file'])) {
+                $files = json_decode($event_row['attach_file'], true);
+                if (is_array($files)) {
+                    foreach ($files as $file) {
+                        $file_path = "../uploads/" . $file;
+                        if (file_exists($file_path)) {
+                            unlink($file_path);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Delete the event
+        mysqli_query($con, "DELETE FROM create_events WHERE id = $delete_id");
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
+    }
+}
+
 // Fetch all events with organizer info
 $query = "SELECT e.*, u.firstname, u.lastname, u.organization FROM create_events e LEFT JOIN usertable u ON e.user_id = u.id ORDER BY e.created_at DESC";
 $result = mysqli_query($con, $query);
@@ -147,6 +186,10 @@ $result = mysqli_query($con, $query);
                                                                 $status_badge = '<span class="badge bg-secondary">Ended</span>';
                                                                 $status_time = !empty($row['updated_at']) && $row['updated_at'] !== $row['created_at'] ? date('M d, Y | h:i A', strtotime($row['updated_at'])) : date('M d, Y | h:i A', strtotime($row['created_at']));
                                                                 $status_time_label = (!empty($row['updated_at']) && $row['updated_at'] !== $row['created_at']) ? 'Updated at' : 'Created at';
+                                                            } elseif ($status_value === 'ongoing') {
+                                                                $status_badge = '<span class="badge bg-primary">Ongoing</span>';
+                                                                $status_time = !empty($row['updated_at']) && $row['updated_at'] !== $row['created_at'] ? date('M d, Y | h:i A', strtotime($row['updated_at'])) : date('M d, Y | h:i A', strtotime($row['created_at']));
+                                                                $status_time_label = (!empty($row['updated_at']) && $row['updated_at'] !== $row['created_at']) ? 'Updated at' : 'Created at';
                                                             } elseif ($status_value === 'active') {
                                                                 $status_badge = '<span class="badge bg-success">Active</span>';
                                                                 $status_time = !empty($row['updated_at']) && $row['updated_at'] !== $row['created_at'] ? date('M d, Y | h:i A', strtotime($row['updated_at'])) : date('M d, Y | h:i A', strtotime($row['created_at']));
@@ -236,21 +279,3 @@ $result = mysqli_query($con, $query);
 </body>
 
 </html>
-
-// Handle cancel and delete actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-if (isset($_POST['cancel_event_id'])) {
-$cancel_id = intval($_POST['cancel_event_id']);
-$now = date('Y-m-d H:i:s');
-mysqli_query($con, "UPDATE create_events SET status = 'cancelled', date_cancelled = '$now' WHERE id = $cancel_id");
-header('Location: ' . $_SERVER['PHP_SELF']);
-exit;
-}
-if (isset($_POST['delete_event_id'])) {
-$delete_id = intval($_POST['delete_event_id']);
-// Optionally: delete related files, registrations, etc.
-mysqli_query($con, "DELETE FROM create_events WHERE id = $delete_id");
-header('Location: ' . $_SERVER['PHP_SELF']);
-exit;
-}
-}

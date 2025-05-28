@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 28, 2025 at 02:39 AM
+-- Generation Time: May 28, 2025 at 03:26 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -57,7 +57,7 @@ INSERT INTO `create_events` (`id`, `event_title`, `event_description`, `date_tim
 (47, 'Cavite State University - University Games 2025', 'Gear up for this year’s highly anticipated University Games on May 19-23, 2025 with the theme “Sustaining Excellence through 𝗦trength, 𝗣erseverance, 𝗢pportunity, 𝗥espect, 𝗧eamwork, and 𝗦uccess.” Students are highly encouraged to show their support by attending the games and cheering on their campus representatives. The University Games aims to foster camaraderie, sportsmanship, and pride among CvSU students and employees.', '2025-05-19 07:00:00', '2025-05-23 18:00:00', 'ended', NULL, 'Cavite State University - Don Severino Delas Alas Campus, Indang, Cavite', 'Organizer A', 'Sports', '4379505', '', '[\"https:\\\\\\\\www.facebook.com\\\\profile.php?id=61576336406987\"]', '[\"682ab192800a8_ugames2025.jpg\"]', 10, 0, '2025-05-19 04:20:34', NULL, ''),
 (49, '4th Association of Computer Engineering (ACES) Day', '𝙍𝙚𝙖𝙙𝙮, 𝙎𝙚𝙩, 𝙄𝙣𝙣𝙤𝙫𝙖𝙩𝙚! Tatakbo tayo hindi lang para manalo—but also to Achieve, Create and Evolve in the world of technology. Get ready to gain something new this ACES DAY, this is the race you don’t wanna miss!', '2025-05-08 07:00:00', '2025-05-09 19:00:00', 'ended', NULL, 'Covered Court 2', 'Organizer A', 'Celebration', '01696969', '', '[\"https:\\/\\/www.facebook.com\\/ACESCVSUCCAT\",\"https:\\/\\/twibbo.nz\\/dpblast-aces\"]', '[\"682acb6d7ac79_aces2025.png\"]', 10, 0, '2025-05-19 06:10:53', NULL, ''),
 (54, 'testing03', 'afaa', '2025-05-29 14:39:00', '2025-06-07 14:39:00', 'active', NULL, 'kahit saan', 'Organizer A', 'Workshop', '41241241241', '', '[]', '[\"6834fb942532b_ac2.jpg\"]', 10, 0, '2025-05-25 06:39:34', '2025-05-27 07:39:00', ''),
-(56, 'Testing04', 'safafafa', '2025-05-28 08:05:00', '2025-05-29 08:05:00', 'cancelled', '2025-05-28 08:18:16', 'sagfasgaga', 'B Organizer', 'Workshop', '2135152', '', '[]', '[\"68365367d49dc_ac4.jpg\"]', 14, 1, '2025-05-28 00:05:59', NULL, 'yoko na');
+(62, 'timer', 'arasrfa', '2025-05-28 21:18:00', '2025-05-28 22:16:00', 'ongoing', NULL, 'kahit saan', 'Organizer A', 'Cultural', '32452424242', '', '[]', NULL, 10, 1, '2025-05-28 13:16:21', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -119,7 +119,8 @@ CREATE TABLE `registers` (
 
 INSERT INTO `registers` (`id`, `firstname`, `lastname`, `year_level`, `section`, `student_number`, `contact_number`, `email`, `terms_accepted`, `registration_date`, `user_id`, `event_id`) VALUES
 (13, 'Attendee', 'A', '2nd Year', 'BSBA 102A', 214141244, '41241241241', 'attendeeA@gmail.com', 1, '2025-05-19 07:14:11', 13, 47),
-(14, 'B', 'Organizer', '2nd Year', 'BSBA 102C', 324242424, '41241241241', 'ttwtw@gmail.com', 1, '2025-05-28 00:06:39', 14, 54);
+(15, 'Attendee', 'A', '2nd Year', 'BSBA 102B', 214242424, '1696969242', 'blblbl@gmail.com', 1, '2025-05-28 13:06:01', 13, 54),
+(16, 'Attendee', 'A', '2nd Year', 'BSBA 102A', 324524525, '41241241241', 'ttwtw@gmail.com', 1, '2025-05-28 13:16:46', 13, 62);
 
 -- --------------------------------------------------------
 
@@ -197,7 +198,7 @@ ALTER TABLE `usertable`
 -- AUTO_INCREMENT for table `create_events`
 --
 ALTER TABLE `create_events`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
 -- AUTO_INCREMENT for table `inbox`
@@ -209,13 +210,13 @@ ALTER TABLE `inbox`
 -- AUTO_INCREMENT for table `registers`
 --
 ALTER TABLE `registers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `usertable`
 --
 ALTER TABLE `usertable`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- Constraints for dumped tables
@@ -238,9 +239,19 @@ DELIMITER $$
 --
 -- Events
 --
-CREATE DEFINER=`root`@`localhost` EVENT `update_event_status` ON SCHEDULE EVERY 5 SECOND STARTS '2025-05-19 11:50:30' ON COMPLETION NOT PRESERVE ENABLE DO UPDATE create_events
-  SET status = 'ended'
-  WHERE ending_time < NOW() AND status != 'ended'$$
+CREATE DEFINER=`root`@`localhost` EVENT `update_event_status` ON SCHEDULE EVERY 5 SECOND STARTS '2025-05-28 20:32:13' ON COMPLETION NOT PRESERVE ENABLE DO BEGIN
+      UPDATE create_events
+      SET status = 'ongoing'
+      WHERE date_time <= NOW() AND ending_time > NOW() AND status NOT IN ('ongoing', 'cancelled');
+
+      UPDATE create_events
+      SET status = 'ended'
+      WHERE ending_time < NOW() AND status NOT IN ('ended', 'cancelled');
+
+      UPDATE create_events
+      SET status = 'active'
+      WHERE date_time > NOW() AND status NOT IN ('active', 'cancelled');
+    END$$
 
 DELIMITER ;
 COMMIT;

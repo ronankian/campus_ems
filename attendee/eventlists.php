@@ -140,6 +140,8 @@ mysqli_query($con, $update_status_query);
                                                         }
                                                     } elseif ($status_value === 'ended') {
                                                         $status_badge = '<span class="badge bg-secondary">Ended</span>';
+                                                    } elseif ($status_value === 'ongoing') {
+                                                        $status_badge = '<span class="badge bg-primary">Ongoing</span>';
                                                     } elseif ($status_value === 'active') {
                                                         $status_badge = '<span class="badge bg-success">Active</span>';
                                                     } else {

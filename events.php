@@ -13,6 +13,8 @@ function getStatusBadge($row)
         return '<span class="badge text-bg-danger">Cancelled</span>';
     } else if (isset($row['status']) && $row['status'] === 'ended') {
         return '<span class="badge text-bg-secondary">Ended</span>';
+    } else if (isset($row['status']) && $row['status'] === 'ongoing') {
+        return '<span class="badge text-bg-primary">Ongoing</span>';
     } else {
         return '<span class="badge text-bg-success">Active</span>';
     }

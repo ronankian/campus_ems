@@ -2,8 +2,8 @@
 include 'login/connection.php';
 // Fetch 3 upcoming events with the nearest date_time in the future, status active
 $now = date('Y-m-d H:i:s');
-// Fetch at least 3 ongoing events: current time is between date_time and ending_time (inclusive), status is active or null
-$query = "SELECT * FROM create_events WHERE (status = 'active' OR status IS NULL) AND date_time <= '$now' AND ending_time >= '$now' ORDER BY date_time ASC LIMIT 3";
+// Fetch at least 3 ongoing events: status is 'ongoing'
+$query = "SELECT * FROM create_events WHERE status = 'ongoing' ORDER BY date_time ASC LIMIT 3";
 $result = mysqli_query($con, $query);
 ?>
 <?php if (mysqli_num_rows($result) > 0): ?>
