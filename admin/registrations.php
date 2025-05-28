@@ -178,7 +178,7 @@ $result = mysqli_query($con, $query);
                                                                 <td><?php echo $section; ?></td>
                                                                 <td><?php echo $student_number; ?></td>
                                                                 <td>
-                                                                    <a href="../attendee/view.php?reg_id=<?php echo $reg_id; ?>"
+                                                                    <a href="view.php?reg_id=<?php echo $reg_id; ?>"
                                                                         class="btn btn-sm rounded-pill btn-primary mb-1"
                                                                         title="View Registration Details"><i
                                                                             class="fa fa-eye"></i></a>

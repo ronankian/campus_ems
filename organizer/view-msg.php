@@ -101,6 +101,8 @@ session_start();
                                 // Fetch message from inbox
                                 $msg_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
                                 $message_data = null;
+                                $reply = '';
+                                $reply_files = [];
                                 if ($msg_id > 0) {
                                     $result = mysqli_query($con, "SELECT * FROM inbox WHERE id = $msg_id LIMIT 1");
                                     if ($result && mysqli_num_rows($result) > 0) {
@@ -115,6 +117,13 @@ session_start();
                                             $attached_files = json_decode($message_data['attach_file'], true);
                                             if (!is_array($attached_files))
                                                 $attached_files = [];
+                                        }
+                                        // Get reply and reply files
+                                        $reply = $message_data['reply'] ?? '';
+                                        if (!empty($message_data['reply_file'])) {
+                                            $reply_files = json_decode($message_data['reply_file'], true);
+                                            if (!is_array($reply_files))
+                                                $reply_files = [];
                                         }
                                     }
                                 }
@@ -250,6 +259,37 @@ session_start();
                                             <label class="form-label col-md-2 mb-0">Attached File(s):</label>
                                             <div class="col-md-10">
                                                 <?php foreach ($attached_files as $file): ?>
+                                                    <a href="../uploads/<?php echo htmlspecialchars($file); ?>" target="_blank"
+                                                        class="btn btn-sm btn-outline-info mb-1">
+                                                        <i class="fa fa-paperclip"></i> <?php echo htmlspecialchars($file); ?>
+                                                    </a>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($reply)): ?>
+                                        <?php if (!empty($message_data['replied_at'])): ?>
+                                            <div class="row mb-2">
+                                                <div class="col-12 text-center mb-2">
+                                                    <span class="badge bg-secondary">Replied at:
+                                                        <?php echo htmlspecialchars($message_data['replied_at']); ?></span>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                        <div class="row mb-3 align-items-center">
+                                            <label for="reply_box" class="form-label col-md-2 mb-0">Reply:</label>
+                                            <div class="col-md-10">
+                                                <textarea class="form-control" id="reply_box" name="reply_box" rows="3"
+                                                    readonly disabled
+                                                    style="background: rgba(43, 45, 66, 0.3) !important; color: #fff !important; resize: vertical; min-height: 48px;"><?php echo htmlspecialchars($reply); ?></textarea>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($reply_files)): ?>
+                                        <div class="row mb-3 align-items-center">
+                                            <label class="form-label col-md-2 mb-0">Reply File(s):</label>
+                                            <div class="col-md-10">
+                                                <?php foreach ($reply_files as $file): ?>
                                                     <a href="../uploads/<?php echo htmlspecialchars($file); ?>" target="_blank"
                                                         class="btn btn-sm btn-outline-info mb-1">
                                                         <i class="fa fa-paperclip"></i> <?php echo htmlspecialchars($file); ?>
