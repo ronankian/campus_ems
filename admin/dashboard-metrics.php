@@ -30,7 +30,10 @@ $all_dates = array_merge($user_dates, $event_dates, $registration_dates, $inbox_
 $all_dates = array_unique($all_dates);
 sort($all_dates);
 
-// Helper: get all Sundays in the current month
+$month = isset($_GET['month']) ? str_pad(intval($_GET['month']), 2, '0', STR_PAD_LEFT) : date('m');
+$year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
+
+// Helper: get all Sundays in the selected month
 function get_sundays_in_month($month, $year)
 {
     $sundays = [];
@@ -46,9 +49,7 @@ function get_sundays_in_month($month, $year)
     return $sundays;
 }
 
-$current_month = date('m');
-$current_year = date('Y');
-$sundays = get_sundays_in_month($current_month, $current_year);
+$sundays = get_sundays_in_month($month, $year);
 
 // Helper: count up to each Sunday
 function count_up_to_sundays($dates, $sundays)
@@ -67,18 +68,17 @@ function count_up_to_sundays($dates, $sundays)
     return $counts;
 }
 
-// Filter dates to current month
-function filter_current_month($dates)
+// Filter dates to selected month
+function filter_current_month($dates, $month, $year)
 {
-    global $current_month, $current_year;
-    return array_filter($dates, function ($d) use ($current_month, $current_year) {
-        return date('m', strtotime($d)) === $current_month && date('Y', strtotime($d)) === $current_year;
+    return array_filter($dates, function ($d) use ($month, $year) {
+        return date('m', strtotime($d)) === $month && date('Y', strtotime($d)) == $year;
     });
 }
-$user_dates_month = filter_current_month($user_dates);
-$event_dates_month = filter_current_month($event_dates);
-$registration_dates_month = filter_current_month($registration_dates);
-$inbox_dates_month = filter_current_month($inbox_dates);
+$user_dates_month = filter_current_month($user_dates, $month, $year);
+$event_dates_month = filter_current_month($event_dates, $month, $year);
+$registration_dates_month = filter_current_month($registration_dates, $month, $year);
+$inbox_dates_month = filter_current_month($inbox_dates, $month, $year);
 
 $users_week = count_up_to_sundays($user_dates_month, $sundays);
 $events_week = count_up_to_sundays($event_dates_month, $sundays);

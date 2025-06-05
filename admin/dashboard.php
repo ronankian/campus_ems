@@ -136,12 +136,22 @@ foreach ($events as $ev) {
                 <div class="row mb-4 align-items-stretch" style="min-height: 320px;">
                     <div class="col-md-8 d-flex">
                         <div class="card card-summary p-3 h-100 w-100" style="min-height: 100%;">
-                            <h5 class="fw-bold text-center" id="siteMetricsTitle">Site Metrics</h5>
-                            <div id="legend-container" class="my-4 text-center"></div>
-                            <canvas id="metricsLineChart" height="150" class="mb-3"></canvas>
+                            <div class="d-flex justify-content-between align-items-center mb-2"
+                                style="min-height: 48px;">
+                                <button class="btn btn-outline-secondary btn-sm" id="prevMetricsMonthBtn"><i
+                                        class="fa fa-chevron-left"></i></button>
+                                <h5 class="fw-bold text-center mb-0" style="flex: 1;">
+                                    Site Metrics <span style="font-weight:normal;">(<span
+                                            id="siteMetricsMonthYear"></span>)</span>
+                                </h5>
+                                <button class="btn btn-outline-secondary btn-sm" id="nextMetricsMonthBtn"><i
+                                        class="fa fa-chevron-right"></i></button>
+                            </div>
+                            <div id="legend-container" class="my-2 text-center"></div>
+                            <canvas id="metricsLineChart" height="70" class="mb-2"></canvas>
                         </div>
                     </div>
-                    <div class="col-md-4 h-100">
+                    <div class="col-md-4 h-100 mt-2">
                         <div class="row g-3 h-100">
                             <div class="col-6 h-50">
                                 <a href="users.php" class="text-decoration-none h-100">
@@ -245,7 +255,7 @@ foreach ($events as $ev) {
                     <?php
                     // Use the same connection as the dashboard
                     $now = date('Y-m-d H:i:s');
-                    $query = "SELECT * FROM create_events WHERE (status = 'active' OR status = 'ongoing' OR status IS NULL) AND date_time > '$now' ORDER BY date_time ASC LIMIT 3";
+                    $query = "SELECT * FROM create_events WHERE ((status = 'active' AND date_time > '$now') OR (status = 'ongoing' AND date_time <= '$now' AND ending_time > '$now')) ORDER BY date_time ASC LIMIT 3";
                     $result = mysqli_query($con, $query);
                     if (mysqli_num_rows($result) > 0): ?>
                         <ul class="list-unstyled">
@@ -279,7 +289,7 @@ foreach ($events as $ev) {
                                     }
                                 }
                                 ?>
-                                <div class="row g-0 my-4 event-row-item"
+                                <div class="row g-0 my-3 event-row-item"
                                     style="border-radius: 16px; overflow: hidden; position: relative; height: 250px;">
                                     <a href="../event-details.php?id=<?php echo $row['id']; ?>"
                                         style="display:block; width:100%; height:100%; position:relative; text-decoration:none;">
@@ -316,157 +326,134 @@ foreach ($events as $ev) {
     <script>
         console.log('Matrix plugin assumed loaded correctly for Chart.js v3');
 
-        fetch('dashboard-metrics.php')
-            .then(res => res.json())
-            .then(data => {
-                // Set the Site Metrics title to current month and year
-                const now = new Date();
-                const monthName = now.toLocaleString('default', { month: 'long' });
-                const year = now.getFullYear();
-                document.getElementById('siteMetricsTitle').textContent = `Site Metrics (${monthName}, ${year})`;
-                const ctx = document.getElementById('metricsLineChart').getContext('2d');
-                const chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: data.labels.map(day => String(day)), // Only day numbers
-                        datasets: [
-                            {
-                                label: 'Users',
-                                data: data.users,
-                                borderColor: '#4e73df',
-                                backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                                fill: false,
-                                tension: 0.3
-                            },
-                            {
-                                label: 'Events',
-                                data: data.events,
-                                borderColor: '#1cc88a',
-                                backgroundColor: 'rgba(28, 200, 138, 0.1)',
-                                fill: false,
-                                tension: 0.3
-                            },
-                            {
-                                label: 'Registrations',
-                                data: data.registrations,
-                                borderColor: '#f6c23e',
-                                backgroundColor: 'rgba(246, 194, 62, 0.1)',
-                                fill: false,
-                                tension: 0.3
-                            },
-                            {
-                                label: 'Messages',
-                                data: data.inbox,
-                                borderColor: '#e74a3b',
-                                backgroundColor: 'rgba(231, 74, 59, 0.1)',
-                                fill: false,
-                                tension: 0.3
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                display: false // Hide built-in legend
-                            },
-                            title: { display: false }
-                        },
-                        scales: {
-                            x: {
-                                ticks: { color: '#fff' },
-                                grid: { color: 'rgba(255,255,255,0.2)' }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    color: '#fff',
-                                    stepSize: 1,
-                                    callback: function (value) {
-                                        if (Number.isInteger(value)) {
-                                            return value;
-                                        }
-                                        return '';
-                                    }
+        let metricsMonth = new Date().getMonth() + 1; // JS months are 0-based, PHP expects 1-based
+        let metricsYear = new Date().getFullYear();
+        let metricsChart = null;
+
+        function setSiteMetricsMonthLabel() {
+            const dateObj = new Date(metricsYear, metricsMonth - 1);
+            const monthName = dateObj.toLocaleString('default', { month: 'long' });
+            document.getElementById('siteMetricsMonthYear').textContent = `${monthName}, ${metricsYear}`;
+        }
+
+        function updateSiteMetrics() {
+            fetch(`dashboard-metrics.php?month=${metricsMonth}&year=${metricsYear}`)
+                .then(res => res.json())
+                .then(data => {
+                    // Update the month/year label
+                    setSiteMetricsMonthLabel();
+
+                    // (Re)draw the chart
+                    const ctx = document.getElementById('metricsLineChart').getContext('2d');
+                    if (metricsChart) metricsChart.destroy();
+                    metricsChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels.map(day => String(day)),
+                            datasets: [
+                                {
+                                    label: 'Users',
+                                    data: data.users,
+                                    borderColor: '#4e73df',
+                                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                                    fill: false,
+                                    tension: 0.3
                                 },
-                                grid: { color: 'rgba(255,255,255,0.2)' }
+                                {
+                                    label: 'Events',
+                                    data: data.events,
+                                    borderColor: '#1cc88a',
+                                    backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                                    fill: false,
+                                    tension: 0.3
+                                },
+                                {
+                                    label: 'Registrations',
+                                    data: data.registrations,
+                                    borderColor: '#f6c23e',
+                                    backgroundColor: 'rgba(246, 194, 62, 0.1)',
+                                    fill: false,
+                                    tension: 0.3
+                                },
+                                {
+                                    label: 'Messages',
+                                    data: data.inbox,
+                                    borderColor: '#e74a3b',
+                                    backgroundColor: 'rgba(231, 74, 59, 0.1)',
+                                    fill: false,
+                                    tension: 0.3
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false },
+                                title: { display: false }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: { color: '#fff' },
+                                    grid: { color: 'rgba(255,255,255,0.2)' }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        color: '#fff',
+                                        stepSize: 1,
+                                        callback: function (value) {
+                                            if (Number.isInteger(value)) {
+                                                return value;
+                                            }
+                                            return '';
+                                        }
+                                    },
+                                    grid: { color: 'rgba(255,255,255,0.2)' }
+                                }
                             }
                         }
-                    }
-                });
+                    });
 
-                // Custom HTML legend
-                function createCustomLegend(chart) {
-                    const container = document.getElementById('legend-container');
-                    container.innerHTML = '';
-                    chart.data.datasets.forEach((ds, i) => {
-                        const legendItem = document.createElement('span');
-                        legendItem.style.display = 'inline-flex';
-                        legendItem.style.alignItems = 'center';
-                        legendItem.style.marginRight = '18px';
-                        legendItem.style.cursor = 'pointer';
-                        legendItem.style.opacity = chart.isDatasetVisible(i) ? '1' : '0.5';
-                        legendItem.innerHTML = `
+                    // Custom HTML legend
+                    function createCustomLegend(chart) {
+                        const container = document.getElementById('legend-container');
+                        container.innerHTML = '';
+                        chart.data.datasets.forEach((ds, i) => {
+                            const legendItem = document.createElement('span');
+                            legendItem.style.display = 'inline-flex';
+                            legendItem.style.alignItems = 'center';
+                            legendItem.style.marginRight = '18px';
+                            legendItem.style.cursor = 'pointer';
+                            legendItem.style.opacity = chart.isDatasetVisible(i) ? '1' : '0.5';
+                            legendItem.innerHTML = `
                             <span style="display:inline-block;width:22px;height:6px;background:${ds.borderColor};border-radius:3px;margin-right:6px;"></span>
                             <span style="color:#fff;font-weight:500;">${ds.label}</span>
                         `;
-                        legendItem.onclick = () => {
-                            chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
-                            chart.update();
-                            createCustomLegend(chart); // Update legend opacity
-                        };
-                        container.appendChild(legendItem);
-                    });
-                }
-                createCustomLegend(chart);
-
-                // Status Pie Chart and Legend
-                const statusCounts = <?php echo json_encode($status_counts); ?>;
-                const statusLabels = ['Ongoing', 'Active', 'Cancelled', 'Ended'];
-                const statusKeys = ['ongoing', 'active', 'cancelled', 'ended'];
-                const statusColors = ['#4e73df', '#1cc88a', '#e74a3b', '#858796'];
-
-                // Pie chart
-                const statusPieCtx = document.getElementById('statusPieChart').getContext('2d');
-                new Chart(statusPieCtx, {
-                    type: 'pie',
-                    data: {
-                        labels: statusLabels,
-                        datasets: [{
-                            data: statusKeys.map(k => statusCounts[k]),
-                            backgroundColor: statusColors,
-                            borderColor: '#222',
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        plugins: {
-                            legend: { display: false },
-                            title: { display: false }
-                        }
+                            legendItem.onclick = () => {
+                                chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
+                                chart.update();
+                                createCustomLegend(chart); // Update legend opacity
+                            };
+                            container.appendChild(legendItem);
+                        });
                     }
-                });
+                    createCustomLegend(metricsChart);
 
-                // Legend
-                const statusLegend = document.getElementById('statusLegend');
-                statusLegend.innerHTML = statusLabels.map((label, i) =>
-                    `<div style="display:flex;align-items:center;margin-bottom:8px;">
-                            <span style="display:inline-block;width:18px;height:8px;background:${statusColors[i]};border-radius:3px;margin-right:8px;"></span>
-                            <span style="color:#fff;font-weight:500;">${label}</span>
-                        </div>`
-                ).join('');
+                    // Status Pie Chart and Legend
+                    const statusCounts = <?php echo json_encode($status_counts); ?>;
+                    const statusLabels = ['Ongoing', 'Active', 'Cancelled', 'Ended'];
+                    const statusKeys = ['ongoing', 'active', 'cancelled', 'ended'];
+                    const statusColors = ['#4e73df', '#1cc88a', '#e74a3b', '#858796'];
 
-                // Inbox Status Pie Chart
-                if (data.inbox_status && data.inbox_status.labels && data.inbox_status.data) {
-                    const inboxStatusColors = ['#e74a3b', '#4e73df', '#f6c23e', '#1cc88a']; // Red (Unread), Blue (Read), Yellow (Pending), Green (Responded)
-                    const inboxStatusCtx = document.getElementById('inboxStatusPieChart').getContext('2d');
-                    new Chart(inboxStatusCtx, {
+                    // Pie chart
+                    const statusPieCtx = document.getElementById('statusPieChart').getContext('2d');
+                    new Chart(statusPieCtx, {
                         type: 'pie',
                         data: {
-                            labels: data.inbox_status.labels,
+                            labels: statusLabels,
                             datasets: [{
-                                data: data.inbox_status.data,
-                                backgroundColor: inboxStatusColors,
+                                data: statusKeys.map(k => statusCounts[k]),
+                                backgroundColor: statusColors,
                                 borderColor: '#222',
                                 borderWidth: 2
                             }]
@@ -479,230 +466,289 @@ foreach ($events as $ev) {
                         }
                     });
 
-                    // Inbox Status Legend
-                    const inboxStatusLegend = document.getElementById('inboxStatusLegend');
-                    inboxStatusLegend.innerHTML = data.inbox_status.labels.map((label, i) =>
+                    // Legend
+                    const statusLegend = document.getElementById('statusLegend');
+                    statusLegend.innerHTML = statusLabels.map((label, i) =>
                         `<div style="display:flex;align-items:center;margin-bottom:8px;">
-                            <span style="display:inline-block;width:18px;height:8px;background:${inboxStatusColors[i]};border-radius:3px;margin-right:8px;"></span>
+                            <span style="display:inline-block;width:18px;height:8px;background:${statusColors[i]};border-radius:3px;margin-right:8px;"></span>
                             <span style="color:#fff;font-weight:500;">${label}</span>
                         </div>`
                     ).join('');
-                }
 
-                // Pass PHP events to JS
-                const events = <?php echo json_encode($events); ?>;
+                    // Inbox Status Pie Chart
+                    if (data.inbox_status && data.inbox_status.labels && data.inbox_status.data) {
+                        const inboxStatusColors = ['#e74a3b', '#4e73df', '#f6c23e', '#1cc88a']; // Red (Unread), Blue (Read), Yellow (Pending), Green (Responded)
+                        const inboxStatusCtx = document.getElementById('inboxStatusPieChart').getContext('2d');
+                        new Chart(inboxStatusCtx, {
+                            type: 'pie',
+                            data: {
+                                labels: data.inbox_status.labels,
+                                datasets: [{
+                                    data: data.inbox_status.data,
+                                    backgroundColor: inboxStatusColors,
+                                    borderColor: '#222',
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                plugins: {
+                                    legend: { display: false },
+                                    title: { display: false }
+                                }
+                            }
+                        });
 
-                // Event status colors
-                const eventStatusColors = {
-                    'ongoing': '#4e73df', // blue
-                    'active': '#1cc88a', // green
-                    'ended': '#858796',   // gray
-                    'cancelled': '#e74a3b' // red
-                };
+                        // Inbox Status Legend
+                        const inboxStatusLegend = document.getElementById('inboxStatusLegend');
+                        inboxStatusLegend.innerHTML = data.inbox_status.labels.map((label, i) =>
+                            `<div style="display:flex;align-items:center;margin-bottom:8px;">
+                            <span style="display:inline-block;width:18px;height:8px;background:${inboxStatusColors[i]};border-radius:3px;margin-right:8px;"></span>
+                            <span style="color:#fff;font-weight:500;">${label}</span>
+                        </div>`
+                        ).join('');
+                    }
 
-                // Event status stacking order (top to bottom)
-                const eventStatusOrder = ['ongoing', 'active', 'cancelled', 'ended'];
+                    // Pass PHP events to JS
+                    const events = <?php echo json_encode($events); ?>;
 
-                // Helper: parse date string as local date
-                function parseDateLocal(dateStr) {
-                    // Expects 'YYYY-MM-DD HH:MM:SS'
-                    const [datePart, timePart] = dateStr.split(' ');
-                    const [year, month, day] = datePart.split('-').map(Number);
-                    const [hour, min, sec] = timePart.split(':').map(Number);
-                    return new Date(year, month - 1, day, hour, min, sec);
-                }
+                    // Event status colors
+                    const eventStatusColors = {
+                        'ongoing': '#4e73df', // blue
+                        'active': '#1cc88a', // green
+                        'ended': '#858796',   // gray
+                        'cancelled': '#e74a3b' // red
+                    };
 
-                // Helper: compare only the date part (ignore time)
-                function isSameOrBetween(day, start, end) {
-                    const d = day.getFullYear() * 10000 + (day.getMonth() + 1) * 100 + day.getDate();
-                    const s = start.getFullYear() * 10000 + (start.getMonth() + 1) * 100 + start.getDate();
-                    const e = end.getFullYear() * 10000 + (end.getMonth() + 1) * 100 + end.getDate();
-                    return d >= s && d <= e;
-                }
+                    // Event status stacking order (top to bottom)
+                    const eventStatusOrder = ['ongoing', 'active', 'cancelled', 'ended'];
 
-                // Helper: get all event bars for a given day
-                function getEventsForDay(year, month, day) {
-                    const dayDate = new Date(year, month, day);
-                    return events.filter(ev => {
+                    // Helper: parse date string as local date
+                    function parseDateLocal(dateStr) {
+                        // Expects 'YYYY-MM-DD HH:MM:SS'
+                        const [datePart, timePart] = dateStr.split(' ');
+                        const [year, month, day] = datePart.split('-').map(Number);
+                        const [hour, min, sec] = timePart.split(':').map(Number);
+                        return new Date(year, month - 1, day, hour, min, sec);
+                    }
+
+                    // Helper: compare only the date part (ignore time)
+                    function isSameOrBetween(day, start, end) {
+                        const d = day.getFullYear() * 10000 + (day.getMonth() + 1) * 100 + day.getDate();
+                        const s = start.getFullYear() * 10000 + (start.getMonth() + 1) * 100 + start.getDate();
+                        const e = end.getFullYear() * 10000 + (end.getMonth() + 1) * 100 + end.getDate();
+                        return d >= s && d <= e;
+                    }
+
+                    // Helper: get all event bars for a given day
+                    function getEventsForDay(year, month, day) {
+                        const dayDate = new Date(year, month, day);
+                        return events.filter(ev => {
+                            const start = parseDateLocal(ev.date_time);
+                            const end = parseDateLocal(ev.ending_time);
+                            // If event spans this day (compare only date part)
+                            return isSameOrBetween(dayDate, start, end);
+                        });
+                    }
+
+                    // Helper: get event bar start/end for a week
+                    function getEventBarForWeek(ev, weekStart, weekEnd) {
                         const start = parseDateLocal(ev.date_time);
                         const end = parseDateLocal(ev.ending_time);
-                        // If event spans this day (compare only date part)
-                        return isSameOrBetween(dayDate, start, end);
-                    });
-                }
-
-                // Helper: get event bar start/end for a week
-                function getEventBarForWeek(ev, weekStart, weekEnd) {
-                    const start = parseDateLocal(ev.date_time);
-                    const end = parseDateLocal(ev.ending_time);
-                    // Clamp event to this week
-                    const barStart = Math.max(0, (start - weekStart) / (1000 * 60 * 60 * 24));
-                    const barEnd = Math.min(6, (end - weekStart) / (1000 * 60 * 60 * 24));
-                    return { left: Math.round(barStart), right: Math.round(barEnd) };
-                }
-
-                // Update: Calendar Implementation
-                class Calendar {
-                    constructor() {
-                        this.date = new Date();
-                        this.currentMonth = this.date.getMonth();
-                        this.currentYear = this.date.getFullYear();
-                        this.selectedDate = new Date();
-                        this.init();
+                        // Clamp event to this week
+                        const barStart = Math.max(0, (start - weekStart) / (1000 * 60 * 60 * 24));
+                        const barEnd = Math.min(6, (end - weekStart) / (1000 * 60 * 60 * 24));
+                        return { left: Math.round(barStart), right: Math.round(barEnd) };
                     }
 
-                    init() {
-                        this.renderCalendar();
-                        this.attachEventListeners();
-                    }
-
-                    renderCalendar() {
-                        const firstDay = new Date(this.currentYear, this.currentMonth, 1);
-                        const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
-                        const startingDay = firstDay.getDay();
-                        const monthLength = lastDay.getDate();
-                        const prevMonthLastDay = new Date(this.currentYear, this.currentMonth, 0).getDate();
-                        document.getElementById('calendarMonthYear').textContent = `${firstDay.toLocaleString('default', { month: 'long' })} ${this.currentYear}`;
-                        const calendarDays = document.getElementById('calendarDays');
-                        calendarDays.innerHTML = '';
-
-                        // Build a 6x7 grid (weeks x days)
-                        let grid = [];
-                        let dayNum = 1;
-                        let nextMonthDay = 1;
-                        for (let week = 0; week < 6; week++) {
-                            let weekRow = [];
-                            for (let day = 0; day < 7; day++) {
-                                let cell = {};
-                                let cellDate;
-                                if (week === 0 && day < startingDay) {
-                                    // Previous month
-                                    cell.type = 'prev';
-                                    cell.day = prevMonthLastDay - (startingDay - day - 1);
-                                    cellDate = new Date(this.currentYear, this.currentMonth - 1, cell.day);
-                                } else if (dayNum > monthLength) {
-                                    // Next month
-                                    cell.type = 'next';
-                                    cell.day = nextMonthDay++;
-                                    cellDate = new Date(this.currentYear, this.currentMonth + 1, cell.day);
-                                } else {
-                                    // Current month
-                                    cell.type = 'current';
-                                    cell.day = dayNum;
-                                    cellDate = new Date(this.currentYear, this.currentMonth, cell.day);
-                                    dayNum++;
-                                }
-                                cell.date = cellDate;
-                                weekRow.push(cell);
-                            }
-                            grid.push(weekRow);
+                    // Update: Calendar Implementation
+                    class Calendar {
+                        constructor() {
+                            this.date = new Date();
+                            this.currentMonth = this.date.getMonth();
+                            this.currentYear = this.date.getFullYear();
+                            this.selectedDate = new Date();
+                            this.init();
                         }
 
-                        // Render grid
-                        grid.forEach(weekRow => {
-                            weekRow.forEach(cell => {
-                                const day = document.createElement('div');
-                                day.className = 'calendar-day';
-                                if (cell.type !== 'current') day.classList.add('other-month');
-                                day.textContent = cell.day;
+                        init() {
+                            this.renderCalendar();
+                            this.attachEventListeners();
+                        }
 
-                                // Today/selected styling (border-bottom instead of circle)
-                                if (cell.type === 'current') {
-                                    if (
-                                        cell.day === this.date.getDate() &&
-                                        this.currentMonth === this.date.getMonth() &&
-                                        this.currentYear === this.date.getFullYear()
-                                    ) {
-                                        day.classList.add('today');
+                        renderCalendar() {
+                            const firstDay = new Date(this.currentYear, this.currentMonth, 1);
+                            const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
+                            const startingDay = firstDay.getDay();
+                            const monthLength = lastDay.getDate();
+                            const prevMonthLastDay = new Date(this.currentYear, this.currentMonth, 0).getDate();
+                            document.getElementById('calendarMonthYear').textContent = `${firstDay.toLocaleString('default', { month: 'long' })} ${this.currentYear}`;
+                            const calendarDays = document.getElementById('calendarDays');
+                            calendarDays.innerHTML = '';
+
+                            // Build a 6x7 grid (weeks x days)
+                            let grid = [];
+                            let dayNum = 1;
+                            let nextMonthDay = 1;
+                            for (let week = 0; week < 6; week++) {
+                                let weekRow = [];
+                                for (let day = 0; day < 7; day++) {
+                                    let cell = {};
+                                    let cellDate;
+                                    if (week === 0 && day < startingDay) {
+                                        // Previous month
+                                        cell.type = 'prev';
+                                        cell.day = prevMonthLastDay - (startingDay - day - 1);
+                                        cellDate = new Date(this.currentYear, this.currentMonth - 1, cell.day);
+                                    } else if (dayNum > monthLength) {
+                                        // Next month
+                                        cell.type = 'next';
+                                        cell.day = nextMonthDay++;
+                                        cellDate = new Date(this.currentYear, this.currentMonth + 1, cell.day);
+                                    } else {
+                                        // Current month
+                                        cell.type = 'current';
+                                        cell.day = dayNum;
+                                        cellDate = new Date(this.currentYear, this.currentMonth, cell.day);
+                                        dayNum++;
                                     }
-                                    if (
-                                        cell.day === this.selectedDate.getDate() &&
-                                        this.currentMonth === this.selectedDate.getMonth() &&
-                                        this.currentYear === this.selectedDate.getFullYear()
-                                    ) {
-                                        day.classList.add('selected');
-                                    }
+                                    cell.date = cellDate;
+                                    weekRow.push(cell);
                                 }
+                                grid.push(weekRow);
+                            }
 
-                                // EVENTS: Add event bars (border-bottom)
-                                if (cell.type === 'current') {
-                                    const dayEvents = getEventsForDay(this.currentYear, this.currentMonth, cell.day);
-                                    if (dayEvents.length > 0) {
-                                        // Sort events by status order
-                                        dayEvents.sort((a, b) => eventStatusOrder.indexOf(a.status) - eventStatusOrder.indexOf(b.status));
-                                        // Remove any previous event bar container
-                                        let barContainer = document.createElement('div');
-                                        barContainer.style.position = 'absolute';
-                                        barContainer.style.left = 0;
-                                        barContainer.style.right = 0;
-                                        barContainer.style.bottom = 0;
-                                        barContainer.style.height = (dayEvents.length * 5) + 'px';
-                                        barContainer.style.pointerEvents = 'none';
-                                        barContainer.style.width = '100%';
-                                        barContainer.style.zIndex = 2;
-                                        day.style.position = 'relative';
-                                        day.appendChild(barContainer);
-                                        day.style.cursor = 'pointer';
-                                        // Render bars in original order for stacking (bottom to top)
-                                        dayEvents.forEach((ev, idx) => {
-                                            const color = eventStatusColors[ev.status] || '#4e73df';
-                                            let bar = document.createElement('div');
-                                            bar.style.position = 'absolute';
-                                            bar.style.left = 0;
-                                            bar.style.right = 0;
-                                            bar.style.height = '4px';
-                                            bar.style.background = color;
-                                            // Calculate bottom offset so first in order is on top
-                                            bar.style.bottom = ((dayEvents.length - 1 - idx) * 5) + 'px';
-                                            bar.style.borderRadius = '2px';
-                                            bar.title = ev.event_title + ' (' + ev.status + ')';
-                                            barContainer.appendChild(bar);
-                                        });
-                                        // Tooltip for all events
-                                        day.title = dayEvents.map(e => e.event_title + ' (' + e.status + ')').join('\n');
+                            // Render grid
+                            grid.forEach(weekRow => {
+                                weekRow.forEach(cell => {
+                                    const day = document.createElement('div');
+                                    day.className = 'calendar-day';
+                                    if (cell.type !== 'current') day.classList.add('other-month');
+                                    day.textContent = cell.day;
+
+                                    // Today/selected styling (border-bottom instead of circle)
+                                    if (cell.type === 'current') {
+                                        if (
+                                            cell.day === this.date.getDate() &&
+                                            this.currentMonth === this.date.getMonth() &&
+                                            this.currentYear === this.date.getFullYear()
+                                        ) {
+                                            day.classList.add('today');
+                                        }
+                                        if (
+                                            cell.day === this.selectedDate.getDate() &&
+                                            this.currentMonth === this.selectedDate.getMonth() &&
+                                            this.currentYear === this.selectedDate.getFullYear()
+                                        ) {
+                                            day.classList.add('selected');
+                                        }
                                     }
-                                }
 
-                                calendarDays.appendChild(day);
+                                    // EVENTS: Add event bars (border-bottom)
+                                    if (cell.type === 'current') {
+                                        const dayEvents = getEventsForDay(this.currentYear, this.currentMonth, cell.day);
+                                        if (dayEvents.length > 0) {
+                                            // Sort events by status order
+                                            dayEvents.sort((a, b) => eventStatusOrder.indexOf(a.status) - eventStatusOrder.indexOf(b.status));
+                                            // Remove any previous event bar container
+                                            let barContainer = document.createElement('div');
+                                            barContainer.style.position = 'absolute';
+                                            barContainer.style.left = 0;
+                                            barContainer.style.right = 0;
+                                            barContainer.style.bottom = 0;
+                                            barContainer.style.height = (dayEvents.length * 5) + 'px';
+                                            barContainer.style.pointerEvents = 'none';
+                                            barContainer.style.width = '100%';
+                                            barContainer.style.zIndex = 2;
+                                            day.style.position = 'relative';
+                                            day.appendChild(barContainer);
+                                            day.style.cursor = 'pointer';
+                                            // Render bars in original order for stacking (bottom to top)
+                                            dayEvents.forEach((ev, idx) => {
+                                                const color = eventStatusColors[ev.status] || '#4e73df';
+                                                let bar = document.createElement('div');
+                                                bar.style.position = 'absolute';
+                                                bar.style.left = 0;
+                                                bar.style.right = 0;
+                                                bar.style.height = '4px';
+                                                bar.style.background = color;
+                                                // Calculate bottom offset so first in order is on top
+                                                bar.style.bottom = ((dayEvents.length - 1 - idx) * 5) + 'px';
+                                                bar.style.borderRadius = '2px';
+                                                bar.title = ev.event_title + ' (' + ev.status + ')';
+                                                barContainer.appendChild(bar);
+                                            });
+                                            // Tooltip for all events
+                                            day.title = dayEvents.map(e => e.event_title + ' (' + e.status + ')').join('\n');
+                                        }
+                                    }
+
+                                    calendarDays.appendChild(day);
+                                });
                             });
-                        });
-                    }
+                        }
 
-                    attachEventListeners() {
-                        document.getElementById('prevMonthBtn').addEventListener('click', () => {
-                            this.currentMonth--;
-                            if (this.currentMonth < 0) {
-                                this.currentMonth = 11;
-                                this.currentYear--;
-                            }
-                            this.renderCalendar();
-                        });
-                        document.getElementById('nextMonthBtn').addEventListener('click', () => {
-                            this.currentMonth++;
-                            if (this.currentMonth > 11) {
-                                this.currentMonth = 0;
-                                this.currentYear++;
-                            }
-                            this.renderCalendar();
-                        });
-                        document.getElementById('calendarDays').addEventListener('click', (e) => {
-                            if (e.target.classList.contains('calendar-day')) {
-                                const days = document.querySelectorAll('.calendar-day');
-                                days.forEach(day => day.classList.remove('selected'));
-                                e.target.classList.add('selected');
-                                // Update selected date
-                                const day = parseInt(e.target.textContent);
-                                if (!e.target.classList.contains('other-month')) {
-                                    this.selectedDate = new Date(this.currentYear, this.currentMonth, day);
+                        attachEventListeners() {
+                            document.getElementById('prevMonthBtn').addEventListener('click', () => {
+                                this.currentMonth--;
+                                if (this.currentMonth < 0) {
+                                    this.currentMonth = 11;
+                                    this.currentYear--;
                                 }
-                            }
-                        });
+                                this.renderCalendar();
+                            });
+                            document.getElementById('nextMonthBtn').addEventListener('click', () => {
+                                this.currentMonth++;
+                                if (this.currentMonth > 11) {
+                                    this.currentMonth = 0;
+                                    this.currentYear++;
+                                }
+                                this.renderCalendar();
+                            });
+                            document.getElementById('calendarDays').addEventListener('click', (e) => {
+                                if (e.target.classList.contains('calendar-day')) {
+                                    const days = document.querySelectorAll('.calendar-day');
+                                    days.forEach(day => day.classList.remove('selected'));
+                                    e.target.classList.add('selected');
+                                    // Update selected date
+                                    const day = parseInt(e.target.textContent);
+                                    if (!e.target.classList.contains('other-month')) {
+                                        this.selectedDate = new Date(this.currentYear, this.currentMonth, day);
+                                    }
+                                }
+                            });
+                        }
                     }
-                }
 
-                // Initialize calendar
-                const calendar = new Calendar();
-            });
+                    // Initialize calendar
+                    const calendar = new Calendar();
+                });
+        }
+
+        document.getElementById('prevMetricsMonthBtn').addEventListener('click', () => {
+            metricsMonth--;
+            if (metricsMonth < 1) {
+                metricsMonth = 12;
+                metricsYear--;
+            }
+            setSiteMetricsMonthLabel();
+            updateSiteMetrics();
+        });
+        document.getElementById('nextMetricsMonthBtn').addEventListener('click', () => {
+            const now = new Date();
+            if (metricsYear < now.getFullYear() || (metricsYear === now.getFullYear() && metricsMonth < now.getMonth() + 1)) {
+                metricsMonth++;
+                if (metricsMonth > 12) {
+                    metricsMonth = 1;
+                    metricsYear++;
+                }
+                setSiteMetricsMonthLabel();
+                updateSiteMetrics();
+            }
+        });
+
+        // Initial load
+        setSiteMetricsMonthLabel();
+        updateSiteMetrics();
     </script>
     <?php include '../footer.php'; ?>
 </body>

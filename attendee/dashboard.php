@@ -49,11 +49,11 @@ if ($user_id) {
         $registered_events[] = $row;
     }
 }
-// Fetch top 3 nearest upcoming events the user is registered to
+// Fetch top 3 nearest upcoming or ongoing events the user is registered to
 $upcoming_events = [];
 if ($user_id) {
     $now = date('Y-m-d H:i:s');
-    $upcoming_query = mysqli_query($con, "SELECT e.* FROM registers r JOIN create_events e ON r.event_id = e.id WHERE r.user_id = '$user_id' AND (e.status = 'active' OR e.status = 'ongoing' OR e.status IS NULL) AND e.date_time > '$now' ORDER BY e.date_time ASC LIMIT 3");
+    $upcoming_query = mysqli_query($con, "SELECT e.* FROM registers r JOIN create_events e ON r.event_id = e.id WHERE r.user_id = '$user_id' AND ((e.status = 'active' AND e.date_time > '$now') OR (e.status = 'ongoing' AND e.date_time <= '$now' AND e.ending_time > '$now')) ORDER BY e.date_time ASC LIMIT 3");
     while ($row = mysqli_fetch_assoc($upcoming_query)) {
         $upcoming_events[] = $row;
     }

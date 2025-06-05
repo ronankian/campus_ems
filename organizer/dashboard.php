@@ -61,7 +61,17 @@ if ($user_id) {
 $upcoming_events = [];
 if ($user_id) {
     $now = date('Y-m-d H:i:s');
-    $upcoming_query = mysqli_query($con, "SELECT * FROM create_events WHERE user_id = '$user_id' AND (status = 'active' OR status = 'ongoing' OR status IS NULL) AND date_time > '$now' ORDER BY date_time ASC LIMIT 3");
+    $upcoming_query = mysqli_query($con, "
+        SELECT * FROM create_events
+        WHERE user_id = '$user_id'
+        AND (
+            (status = 'active' AND date_time > '$now')
+            OR
+            (status = 'ongoing' AND date_time <= '$now' AND ending_time > '$now')
+        )
+        ORDER BY date_time ASC
+        LIMIT 3
+    ");
     while ($row = mysqli_fetch_assoc($upcoming_query)) {
         $upcoming_events[] = $row;
     }
@@ -225,10 +235,21 @@ if ($user_id) {
                     </div>
                     <div class="col-md-9 d-flex">
                         <div class="card card-summary p-3 h-100 w-100" style="min-height: 100%;">
-                            <h5 class="fw-bold text-center" id="metricsTitle">My Metrics
-                                (<?php echo $metrics_month . ', ' . $metrics_year; ?>)</h5>
-                            <div id="metrics-legend" class="my-4 text-center"></div>
-                            <canvas id="userMetricsChart" height="150" class="mb-3"></canvas>
+                            <div class="d-flex justify-content-between align-items-center mb-2"
+                                style="min-height: 48px;">
+                                <button class="btn btn-outline-secondary btn-sm" id="prevMetricsMonthBtn"><i
+                                        class="fa fa-chevron-left"></i></button>
+                                <h5 class="fw-bold text-center mb-0 flex-grow-1" style="margin: 0;">
+                                    My Metrics <span style="font-weight:normal;">(<span
+                                            id="metricsMonthYear"></span>)</span>
+                                </h5>
+                                <button class="btn btn-outline-secondary btn-sm" id="nextMetricsMonthBtn"><i
+                                        class="fa fa-chevron-right"></i></button>
+                            </div>
+                            <div id="legend-container" class="my-2 text-center"></div>
+                            <div style="height:150px;">
+                                <canvas id="userMetricsChart" height="150" style="max-height:150px;"></canvas>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-3 d-flex flex-column gap-3 h-100">
@@ -488,19 +509,17 @@ if ($user_id) {
     <?php include '../footer.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
-        // Metrics chart for organizer
-        const metricsLabels = <?php echo json_encode($metrics_days); ?>;
-        const eventCreatedCounts = <?php echo json_encode($event_created_counts); ?>;
-        const registrantsCounts = <?php echo json_encode($registrants_counts); ?>;
+        let metricsMonth = new Date().getMonth() + 1; // Always start on current month
+        let metricsYear = new Date().getFullYear();
         const ctx = document.getElementById('userMetricsChart').getContext('2d');
-        const metricsChart = new Chart(ctx, {
+        let metricsChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: metricsLabels,
+                labels: [],
                 datasets: [
                     {
                         label: 'Event Created',
-                        data: eventCreatedCounts,
+                        data: [],
                         borderColor: '#0d6efd',
                         backgroundColor: 'rgba(13, 110, 253, 0.1)',
                         fill: false,
@@ -508,7 +527,7 @@ if ($user_id) {
                     },
                     {
                         label: 'Registrants',
-                        data: registrantsCounts,
+                        data: [],
                         borderColor: '#0dcaf0',
                         backgroundColor: 'rgba(13, 202, 240, 0.1)',
                         fill: false,
@@ -519,9 +538,7 @@ if ($user_id) {
             options: {
                 responsive: true,
                 plugins: {
-                    legend: {
-                        display: false // Hide built-in legend
-                    },
+                    legend: { display: false },
                     title: { display: false }
                 },
                 scales: {
@@ -547,9 +564,14 @@ if ($user_id) {
             }
         });
 
-        // Custom HTML legend for metrics
-        function createMetricsLegend(chart) {
-            const container = document.getElementById('metrics-legend');
+        function setMetricsMonthLabel() {
+            const dateObj = new Date(metricsYear, metricsMonth - 1);
+            const monthName = dateObj.toLocaleString('default', { month: 'long' });
+            document.getElementById('metricsMonthYear').textContent = `${monthName}, ${metricsYear}`;
+        }
+
+        function createCustomLegend(chart) {
+            const container = document.getElementById('legend-container');
             container.innerHTML = '';
             chart.data.datasets.forEach((ds, i) => {
                 const legendItem = document.createElement('span');
@@ -565,12 +587,48 @@ if ($user_id) {
                 legendItem.onclick = () => {
                     chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
                     chart.update();
-                    createMetricsLegend(chart); // Update legend opacity
+                    createCustomLegend(chart); // Update legend opacity
                 };
                 container.appendChild(legendItem);
             });
         }
-        createMetricsLegend(metricsChart);
+        createCustomLegend(metricsChart);
+
+        function updateMetricsChart() {
+            fetch('metrics-data.php?month=' + metricsMonth + '&year=' + metricsYear)
+                .then(res => res.json())
+                .then(data => {
+                    metricsChart.data.labels = data.labels;
+                    metricsChart.data.datasets[0].data = data.event_created;
+                    metricsChart.data.datasets[1].data = data.registrants;
+                    metricsChart.update();
+                    createCustomLegend(metricsChart);
+                });
+        }
+
+        document.getElementById('prevMetricsMonthBtn').addEventListener('click', () => {
+            metricsMonth--;
+            if (metricsMonth < 1) {
+                metricsMonth = 12;
+                metricsYear--;
+            }
+            setMetricsMonthLabel();
+            updateMetricsChart();
+        });
+        document.getElementById('nextMetricsMonthBtn').addEventListener('click', () => {
+            const now = new Date();
+            if (metricsYear < now.getFullYear() || (metricsYear === now.getFullYear() && metricsMonth < now.getMonth() + 1)) {
+                metricsMonth++;
+                if (metricsMonth > 12) {
+                    metricsMonth = 1;
+                    metricsYear++;
+                }
+                setMetricsMonthLabel();
+                updateMetricsChart();
+            }
+        });
+        setMetricsMonthLabel();
+        updateMetricsChart();
     </script>
 </body>
 
